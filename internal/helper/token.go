@@ -8,6 +8,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
@@ -55,12 +56,12 @@ func NewTokenHelper(config *viper.Viper, log *logrus.Logger) *TokenHelper {
 	}
 }
 
-func (c *TokenHelper) GenerateAccessToken(userID string) (*entity.AccessToken, error) {
+func (c *TokenHelper) GenerateAccessToken(userUUID uuid.UUID) (*entity.AccessToken, error) {
 	expirationTime := time.Now().Add(time.Minute * c.expireTime.AccessToken)
 
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
-	claims["user_id"] = userID
+	claims["user_uuid"] = userUUID
 	claims["exp"] = expirationTime.Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -70,17 +71,17 @@ func (c *TokenHelper) GenerateAccessToken(userID string) (*entity.AccessToken, e
 	}
 
 	return &entity.AccessToken{
-		UserID:    userID,
+		UserUUID:  userUUID,
 		Token:     stringToken,
 		ExpiresAt: expirationTime,
 	}, nil
 }
 
-func (c *TokenHelper) GenerateRefreshToken(userID string) (*entity.RefreshToken, error) {
+func (c *TokenHelper) GenerateRefreshToken(userUUID uuid.UUID) (*entity.RefreshToken, error) {
 	expirationTime := time.Now().Add(time.Hour * 24 * c.expireTime.RefreshToken)
 
 	claims := jwt.MapClaims{}
-	claims["user_id"] = userID
+	claims["user_uuid"] = userUUID
 	claims["exp"] = expirationTime.Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -90,7 +91,7 @@ func (c *TokenHelper) GenerateRefreshToken(userID string) (*entity.RefreshToken,
 	}
 
 	return &entity.RefreshToken{
-		UserID:    userID,
+		UserUUID:  userUUID,
 		Token:     stringToken,
 		ExpiresAt: expirationTime,
 	}, nil
@@ -108,13 +109,19 @@ func (c *TokenHelper) VerifyAccessToken(token string) (*entity.AccessToken, erro
 	accessTokenDetails := &entity.AccessToken{}
 	claims, ok := tokenClaims.Claims.(jwt.MapClaims)
 	if ok && tokenClaims.Valid {
-		userIDFloat, ok := claims["user_id"].(string)
+		userIDStr, ok := claims["user_uuid"].(string)
 		if !ok {
-			fmt.Println("")
+			fmt.Println("user_uuid not a string")
 			return nil, errors.New("invalid token claims")
 		}
 
-		accessTokenDetails.UserID = userIDFloat
+		userUUID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			fmt.Println("failed to parse uuid:", err)
+			return nil, errors.New("invalid token claims")
+		}
+
+		accessTokenDetails.UserUUID = userUUID
 		expFloat, ok := claims["exp"].(float64)
 		if !ok {
 			return nil, errors.New("invalid exp in token claims")
@@ -143,9 +150,16 @@ func (c *TokenHelper) VerifyRefreshToken(token string) (*entity.RefreshToken, er
 		return nil, errors.New("invalid token claims")
 	}
 
-	userID, ok := claims["user_id"].(string)
+	userIDStr, ok := claims["user_uuid"].(string)
 	if !ok {
-		return nil, errors.New("invalid user_id in token claims")
+		fmt.Println("user_uuid not a string")
+		return nil, errors.New("invalid token claims")
+	}
+
+	userUUID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		fmt.Println("failed to parse uuid:", err)
+		return nil, errors.New("invalid token claims")
 	}
 
 	expFloat, ok := claims["exp"].(float64)
@@ -155,7 +169,7 @@ func (c *TokenHelper) VerifyRefreshToken(token string) (*entity.RefreshToken, er
 	expiresAt := time.Unix(int64(expFloat), 0)
 
 	refreshTokenDetails := &entity.RefreshToken{
-		UserID:    userID,
+		UserUUID:  userUUID,
 		ExpiresAt: expiresAt,
 	}
 

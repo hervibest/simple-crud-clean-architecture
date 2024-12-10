@@ -1,10 +1,14 @@
 package entity
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 // AccessToken represents an access token entity
 type AccessToken struct {
-	UserID    string
+	UserUUID  uuid.UUID
 	Token     string
 	CreatedAt *time.Time
 	UpdatedAt *time.Time
@@ -12,7 +16,7 @@ type AccessToken struct {
 }
 
 type RefreshToken struct {
-	UserID    string
+	UserUUID  uuid.UUID
 	Token     string
 	CreatedAt *time.Time
 	UpdatedAt *time.Time

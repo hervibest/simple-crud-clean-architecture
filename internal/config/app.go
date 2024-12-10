@@ -42,11 +42,13 @@ func Bootstrap(config *BootstrapConfig) {
 	throttle := middleware.NewThrottle(1, 60)
 
 	//setup
+	middleware := middleware.NewAuth(userUseCase)
 
 	routeConfig := route.RouteConfig{
 		App:            config.App,
 		UserController: userController,
 		Throttle:       throttle,
+		AuthMiddleware: middleware,
 	}
 	routeConfig.Setup()
 }

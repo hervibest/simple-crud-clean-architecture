@@ -4,6 +4,7 @@ import (
 	"simple-crud-clean-architecture/internal/entity"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -27,6 +28,10 @@ func (r *UserRepository) CountByEmail(db *gorm.DB, email any) (int64, error) {
 
 func (r *UserRepository) FindByEmail(db *gorm.DB, user *entity.User, email string) error {
 	return db.Where("email = ?", email).Take(user).Error
+}
+
+func (r *UserRepository) FindByUUID(db *gorm.DB, user *entity.User, userUUID uuid.UUID) error {
+	return db.Where("uuid = ?", userUUID).Take(user).Error
 }
 
 func (r *UserRepository) GetVerificationTokenByEmail(
@@ -61,6 +66,7 @@ func (r *UserRepository) CreateOrUpdateVerificationToken(db *gorm.DB, email stri
 	if err := db.Save(&verificationToken).Error; err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -90,6 +96,7 @@ func (r *UserRepository) CreateOrUpdateResetPasswordToken(db *gorm.DB, email str
 	if err := db.Save(&resetPasswordToken).Error; err != nil {
 		return err
 	}
+
 	return nil
 }
 

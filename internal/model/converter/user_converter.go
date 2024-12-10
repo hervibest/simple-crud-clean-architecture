@@ -14,3 +14,14 @@ func UserToResponse(user *entity.User) *model.UserResponse {
 		VerifiedAt: user.VerifiedAt,
 	}
 }
+
+func UserToTokenResponse(user *entity.User) *model.UserResponse {
+	return &model.UserResponse{
+		UUID:         user.UUID,
+		Email:        user.Email,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+		AccessToken:  user.AccessToken,
+		RefreshToken: user.RefreshToken,
+	}
+}

@@ -45,3 +45,31 @@ type ResetPasswordUserRequest struct {
 	Password string `json:"password" validate:"required,max=100"`
 	Token    string `json:"token" validate:"required"`
 }
+
+type LoginUserRequest struct {
+	Email    string `json:"email" validate:"required,email,max=100"`
+	Password string `json:"password" validate:"required,max=100"`
+}
+
+type GetUserRequest struct {
+	Email string `json:"email" validate:"required,max=100"`
+}
+
+type VerifyUserRequest struct {
+	Token string `validate:"required"`
+}
+
+type LogoutUserRequest struct {
+	Email        string
+	AccessToken  string
+	RefreshToken string `json:"refresh_token" validate:"required"`
+}
+
+type AccessTokenRequest struct {
+	Token string `validate:"required"`
+}
+
+type UpdateUserRequest struct {
+	Email    string
+	Password string `json:"password,omitempty" validate:"max=100"`
+}

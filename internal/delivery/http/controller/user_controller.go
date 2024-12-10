@@ -1,6 +1,7 @@
 package http
 
 import (
+	"simple-crud-clean-architecture/internal/delivery/http/middleware"
 	"simple-crud-clean-architecture/internal/helper"
 	"simple-crud-clean-architecture/internal/model"
 	"simple-crud-clean-architecture/internal/usecase"
@@ -121,7 +122,6 @@ func (c *UserController) RequestResetPassword(ctx *fiber.Ctx) error {
 	return ctx.JSON(model.WebResponse{
 		Success: true,
 	})
-
 }
 
 func (c *UserController) ValidateResetToken(ctx *fiber.Ctx) error {
@@ -145,7 +145,6 @@ func (c *UserController) ValidateResetToken(ctx *fiber.Ctx) error {
 		Success: true,
 		Data:    data,
 	})
-
 }
 
 func (c *UserController) ResetPassword(ctx *fiber.Ctx) error {
@@ -166,5 +165,130 @@ func (c *UserController) ResetPassword(ctx *fiber.Ctx) error {
 	return ctx.JSON(model.WebResponse{
 		Success: true,
 	})
+}
 
+func (c *UserController) Login(ctx *fiber.Ctx) error {
+	request := new(model.LoginUserRequest)
+	err := ctx.BodyParser(request)
+	if err != nil {
+		c.Log.Warnf("Failed to parse request body : %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	response, err := c.UseCase.Login(ctx.UserContext(), request)
+	if err != nil {
+		c.Log.Warnf("Failed to login user : %+v", err)
+		return err
+	}
+
+	data := map[string]interface{}{
+		"user": response,
+	}
+
+	return ctx.JSON(model.WebResponse{
+		Success: true,
+		Data:    data,
+	})
+}
+
+func (c *UserController) Current(ctx *fiber.Ctx) error {
+	auth := middleware.GetUser(ctx)
+
+	request := &model.GetUserRequest{
+		Email: auth.Email,
+	}
+
+	response, err := c.UseCase.Current(ctx.UserContext(), request)
+	if err != nil {
+		c.Log.WithError(err).Warnf("Failed to get current user")
+		return err
+	}
+
+	data := map[string]interface{}{
+		"user": response,
+	}
+
+	return ctx.JSON(model.WebResponse{
+		Success: true,
+		Data:    data,
+	})
+}
+
+func (c *UserController) RequestAccessToken(ctx *fiber.Ctx) error {
+	request := new(model.AccessTokenRequest)
+	err := ctx.BodyParser(request)
+	if err != nil {
+		c.Log.Warnf("Failed to parse request body : %+v", err)
+		return fiber.ErrBadRequest
+	}
+
+	response, err := c.UseCase.AccessTokenRequest(ctx.UserContext(), request)
+	if err != nil {
+		c.Log.Warnf("Failed to login user : %+v", err)
+		return err
+	}
+
+	data := map[string]interface{}{
+		"user": response,
+	}
+
+	return ctx.JSON(model.WebResponse{
+		Success: true,
+		Data:    data,
+	})
+}
+
+func (c *UserController) Logout(ctx *fiber.Ctx) error {
+	auth := middleware.GetUser(ctx)
+
+	request := new(model.LogoutUserRequest)
+	err := ctx.BodyParser(request)
+	if err != nil {
+		c.Log.Warnf("Failed to parse request body : %+v", err)
+		return fiber.ErrBadRequest
+	}
+
+	request.Email = auth.Email
+	request.AccessToken = auth.Token
+	response, err := c.UseCase.Logout(ctx.UserContext(), request)
+	if err != nil {
+		c.Log.WithError(err).Warnf("Failed to logout user")
+		return err
+	}
+
+	data := map[string]interface{}{
+		"logout": response,
+	}
+
+	return ctx.JSON(model.WebResponse{
+		Success: true,
+		Data:    data,
+	})
+}
+
+func (c *UserController) Update(ctx *fiber.Ctx) error {
+	auth := middleware.GetUser(ctx)
+
+	request := new(model.UpdateUserRequest)
+	if err := ctx.BodyParser(request); err != nil {
+		c.Log.Warnf("Failed to parse request body : %+v", err)
+		return fiber.ErrBadRequest
+	}
+
+	request.Email = auth.Email
+	response, err := c.UseCase.Update(ctx.UserContext(), request)
+	if err != nil {
+		c.Log.WithError(err).Warnf("Failed to update user")
+		return err
+	}
+
+	// Populate the Data map with multiple fields
+	data := map[string]interface{}{
+		"user": response,
+	}
+
+	return ctx.JSON(model.WebResponse{
+		Success: true,
+		Data:    data,
+	})
 }

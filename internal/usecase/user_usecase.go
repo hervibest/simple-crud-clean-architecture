@@ -295,3 +295,231 @@ func (c *UserUseCase) ResetPassword(ctx context.Context, request *model.ResetPas
 	}
 	return nil
 }
+
+func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequest) (*model.UserResponse, error) {
+
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Invalid request body  : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	user := new(entity.User)
+	if err := c.UserRepository.FindByEmail(tx, user, request.Email); err != nil {
+		c.Log.Warnf("Failed find user by id : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, "email or password is invalid")
+	}
+
+	if !user.HasVerifiedEmail() {
+		c.Log.Warnf("Email is not verified")
+		return nil, fiber.NewError(fiber.StatusBadRequest, "unverified email")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)); err != nil {
+		c.Log.Warnf("Failed to compare user password with bcrype hash : %+v", err)
+		return nil, fiber.NewError(fiber.StatusBadRequest, "email or password is invalid")
+	}
+
+	accessTokenDetails, err := c.TokenHelper.GenerateAccessToken(user.UUID)
+	if err != nil {
+		c.Log.Warnf("Failed to generate token : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	user.AccessToken = accessTokenDetails.Token
+
+	refreshTokenDetails, err := c.TokenHelper.GenerateRefreshToken(user.UUID)
+	if err != nil {
+		c.Log.Warnf("Failed to generate token : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := c.RedisClient.Set(ctx, refreshTokenDetails.Token, user.ID, time.Until(refreshTokenDetails.ExpiresAt)).Err(); err != nil {
+		c.Log.Warnf("Failed to save token to redis : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	user.RefreshToken = refreshTokenDetails.Token
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.UserToTokenResponse(user), nil
+}
+
+func (c *UserUseCase) Current(ctx context.Context, request *model.GetUserRequest) (*model.UserResponse, error) {
+
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Invalid request body : %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	user := new(entity.User)
+	if err := c.UserRepository.FindByEmail(c.DB, user, request.Email); err != nil {
+		c.Log.Warnf("Failed find user by email : %+v", err)
+		return nil, fiber.ErrNotFound
+	}
+
+	return converter.UserToResponse(user), nil
+}
+
+func (c *UserUseCase) Verify(ctx context.Context, request *model.VerifyUserRequest) (*model.Auth, error) {
+
+	err := c.Validate.Struct(request)
+	if err != nil {
+		c.Log.Warnf("Invalid request body : %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	accessTokenDetails, err := c.TokenHelper.VerifyAccessToken(request.Token)
+	if err != nil {
+		c.Log.Warnf("Failed to verify access token : %+v", err)
+		return nil, fiber.ErrUnauthorized
+	}
+
+	user := new(entity.User)
+	if err := c.UserRepository.FindByUUID(c.DB, user, accessTokenDetails.UserUUID); err != nil {
+		c.Log.Warnf("Failed find user by id : %+v", err)
+		return nil, fiber.ErrNotFound
+	}
+
+	userUUID, err := c.RedisClient.Get(ctx, request.Token).Result()
+
+	if userUUID != "" {
+		c.Log.Warnf("Access token found in Redis, user has already signed out : %+v", err)
+		return nil, fiber.ErrUnauthorized
+	}
+
+	return &model.Auth{UUID: user.UUID, Email: user.Email, Token: request.Token}, nil
+}
+
+func (c *UserUseCase) Logout(ctx context.Context, request *model.LogoutUserRequest) (bool, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+
+	defer tx.Rollback()
+
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Invalid request body : %+v", err)
+		return false, fiber.ErrBadRequest
+	}
+
+	user := new(entity.User)
+	if err := c.UserRepository.FindByEmail(tx, user, request.Email); err != nil {
+		c.Log.Warnf("Failed find user by email : %+v", err)
+		return false, fiber.ErrNotFound
+	}
+
+	if err := c.RedisClient.Set(ctx, request.AccessToken, user.ID, time.Until(time.Now().Add(15*time.Minute))).Err(); err != nil {
+		c.Log.Warnf("Failed to save token to redis : %+v", err)
+		return false, fiber.ErrInternalServerError
+	}
+
+	if err := c.RedisClient.Del(ctx, request.RefreshToken).Err(); err != nil {
+		c.Log.Warnf("Failed to delete refresh token in redis : %+v", err)
+		return false, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed to commit transaction : %+v", err)
+		return false, fiber.ErrInternalServerError
+	}
+
+	return true, nil
+}
+
+func (c *UserUseCase) AccessTokenRequest(ctx context.Context, request *model.AccessTokenRequest) (*model.UserResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	err := c.Validate.Struct(request)
+	if err != nil {
+		c.Log.Warnf("Invalid request body : %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	refreshTokenDetails, err := c.TokenHelper.VerifyRefreshToken(request.Token)
+	if err != nil {
+		c.Log.Warnf("Invalid refresh token : %+v", err)
+		return nil, fiber.NewError(fiber.StatusUnauthorized, "Invalid refresh token")
+	}
+
+	user := new(entity.User)
+	if err := c.UserRepository.FindByUUID(c.DB.WithContext(ctx), user, refreshTokenDetails.UserUUID); err != nil {
+		c.Log.Warnf("Failed to find user by ID : %+v", err)
+		return nil, fiber.NewError(fiber.StatusNotFound, "User not found")
+	}
+
+	userID, err := c.RedisClient.Get(ctx, request.Token).Result()
+	if err != nil || userID == "" {
+		c.Log.Warnf("Refresh token not found in Redis : %+v", err)
+		return nil, fiber.NewError(fiber.StatusUnauthorized, "Invalid refresh token")
+	}
+
+	accessTokenDetails, err := c.TokenHelper.GenerateAccessToken(user.UUID)
+	if err != nil {
+		c.Log.Warnf("Failed to generate access token : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	user.AccessToken = accessTokenDetails.Token
+
+	if time.Until(refreshTokenDetails.ExpiresAt) < time.Hour*24 { // 1 hari sebelum kadaluarsa
+		newRefreshTokenDetails, err := c.TokenHelper.GenerateRefreshToken(user.UUID)
+		if err != nil {
+			c.Log.Warnf("Failed to generate new refresh token : %+v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+
+		if err := c.RedisClient.Set(ctx, newRefreshTokenDetails.Token, user.ID, time.Until(newRefreshTokenDetails.ExpiresAt)).Err(); err != nil {
+			c.Log.Warnf("Failed to save new refresh token to Redis : %+v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+
+		user.RefreshToken = newRefreshTokenDetails.Token
+	} else {
+		user.RefreshToken = request.Token
+	}
+
+	return converter.UserToTokenResponse(user), nil
+}
+
+func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserRequest) (*model.UserResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.Warnf("Invalid request body : %+v", err)
+		return nil, fiber.ErrBadRequest
+	}
+
+	user := new(entity.User)
+	if err := c.UserRepository.FindByEmail(tx, user, request.Email); err != nil {
+		c.Log.Warnf("Failed find user by id : %+v", err)
+		return nil, fiber.ErrNotFound
+	}
+
+	if request.Password != "" {
+		password, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+		if err != nil {
+			c.Log.Warnf("Failed to generate bcrype hash : %+v", err)
+			return nil, fiber.ErrInternalServerError
+		}
+		user.Password = string(password)
+	}
+
+	if err := c.UserRepository.Update(tx, user); err != nil {
+		c.Log.Warnf("Failed save user : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.UserToResponse(user), nil
+}
