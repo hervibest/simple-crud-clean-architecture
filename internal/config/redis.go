@@ -9,12 +9,13 @@ import (
 )
 
 func NewRedisClient(viper *viper.Viper, log *logrus.Logger) *redis.Client {
-	addr := viper.GetString("redis.addr")
+	addr := viper.GetString("redis.host") + ":" + viper.GetString("redis.port")
+	password := viper.GetString("redis.password")
 
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     addr,
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Password: password, // no password set
+		DB:       0,        // use default DB
 	})
 
 	ctx := context.TODO()
