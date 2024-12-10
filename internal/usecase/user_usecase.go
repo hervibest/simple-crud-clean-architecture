@@ -184,3 +184,114 @@ func (c *UserUseCase) VerifyEmail(ctx context.Context, request *model.VerifyEmai
 	return nil
 }
 
+func (c *UserUseCase) RequestResetPassword(ctx context.Context, email string, newUser bool) error {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	user := new(entity.User)
+	if err := c.UserRepository.FindByEmail(tx, user, email); err != nil {
+		c.Log.Warnf("Failed find user by email : %+v", err)
+		return fiber.NewError(fiber.StatusNotFound, "failed find user by email")
+	}
+
+	token := uuid.New().String()
+	if err := c.UserRepository.CreateOrUpdateResetPasswordToken(tx, email, token); err != nil {
+		c.Log.Warnf("Failed to create reset password token: %+v", err)
+		return fiber.NewError(fiber.StatusBadRequest, "failed to create reset password token")
+	}
+
+	encryptedToken, err := c.TokenHelper.Encrypt(token)
+	if err != nil {
+		c.Log.Warnf("Failed to register user : %+v", err)
+		return fiber.ErrInternalServerError
+	}
+
+	token = encryptedToken
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction : %+v", err)
+		return fiber.ErrInternalServerError
+	}
+
+	if err := c.EmailHelper.SendEmail(email, token, "reset password"); err != nil {
+		c.Log.Warnf("Failed to send Email: %+v", err)
+	}
+
+	return nil
+}
+
+func (c *UserUseCase) ValidateResetToken(ctx context.Context, request *model.ValidateResetTokenRequest) (bool, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.WithError(err).Error("failed to validate request body")
+		return false, fiber.ErrBadRequest
+	}
+
+	decryptedToken, err := c.TokenHelper.Decrypt(request.Token)
+	if err != nil {
+		c.Log.Warnf("Failed to register user : %+v", err)
+		return false, fiber.ErrBadRequest
+	}
+
+	request.Token = decryptedToken
+	fmt.Println(request)
+
+	resetPasswordToken := new(entity.ResetPasswordToken)
+	if err := c.UserRepository.GetResetPasswordTokenByEmail(tx, resetPasswordToken, request.Email, request.Token); err != nil {
+		c.Log.Warnf("Failed to find Verification Token: %+v", err)
+		return false, nil
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction : %+v", err)
+		return false, fiber.ErrInternalServerError
+	}
+	return true, nil
+}
+
+func (c *UserUseCase) ResetPassword(ctx context.Context, request *model.ResetPasswordUserRequest) error {
+	tx := c.DB.WithContext(ctx).Begin()
+
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.WithError(err).Error("failed to validate request body")
+		return fiber.ErrBadRequest
+	}
+
+	decryptedToken, err := c.TokenHelper.Decrypt(request.Token)
+	if err != nil {
+		c.Log.Warnf("Failed to register user : %+v", err)
+		return err
+	}
+
+	request.Token = decryptedToken
+	fmt.Println(request)
+
+	resetPasswordToken := new(entity.ResetPasswordToken)
+	if err := c.UserRepository.GetResetPasswordTokenByEmail(tx, resetPasswordToken, request.Email, request.Token); err != nil {
+		c.Log.Warnf("Failed to find Verification Token: %+v", err)
+		return fiber.ErrNotFound
+	}
+
+	if time.Since(resetPasswordToken.UpdatedAt) > 15*time.Minute {
+		c.Log.Warnf("Reset password token expired")
+		return fiber.NewError(fiber.StatusUnauthorized, "reset password token expired")
+	}
+
+	password, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.Log.Warnf("Failed to generate bcrype hash : %+v", err)
+		return fiber.ErrInternalServerError
+	}
+
+	if err := c.UserRepository.ResetPassword(tx, resetPasswordToken, string(password)); err != nil {
+		c.Log.Warnf("Failed to set user email validated: %+v", err)
+		return fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction : %+v", err)
+		return fiber.ErrInternalServerError
+	}
+	return nil
+}

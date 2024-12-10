@@ -96,5 +96,75 @@ func (c *UserController) RequestEmailVerification(ctx *fiber.Ctx) error {
 	return ctx.JSON(model.WebResponse{
 		Success: true,
 	})
+}
+
+func (c *UserController) RequestResetPassword(ctx *fiber.Ctx) error {
+	request := new(model.SendResetPasswordRequest)
+	err := ctx.BodyParser(request)
+	if err != nil {
+		c.Log.Warnf("Failed to parse request body : %+v", err)
+		return fiber.ErrBadRequest
+	}
+
+	var rateLimit bool = helper.RateLimit("requestResetPass"+request.Email, 1, 60*2)
+	if !rateLimit {
+		c.Log.Warnf("Failed to register user : %+v", err)
+		return fiber.NewError(fiber.StatusTooManyRequests, "can't resend reset password email more than once in 2 minutes")
+	}
+
+	err = c.UseCase.RequestResetPassword(ctx.UserContext(), request.Email, false)
+	if err != nil {
+		c.Log.Warnf("Failed to register user : %+v", err)
+		return err
+	}
+
+	return ctx.JSON(model.WebResponse{
+		Success: true,
+	})
+
+}
+
+func (c *UserController) ValidateResetToken(ctx *fiber.Ctx) error {
+	request := new(model.ValidateResetTokenRequest)
+	err := ctx.BodyParser(request)
+	if err != nil {
+		c.Log.Warnf("Failed to parse request body : %+v", err)
+		return fiber.ErrBadRequest
+	}
+
+	valid, err := c.UseCase.ValidateResetToken(ctx.UserContext(), request)
+	if err != nil {
+		c.Log.Warnf("Failed to validate reset token : %+v", err)
+		return err
+	}
+
+	data := map[string]interface{}{
+		"valid": valid,
+	}
+	return ctx.JSON(model.WebResponse{
+		Success: true,
+		Data:    data,
+	})
+
+}
+
+func (c *UserController) ResetPassword(ctx *fiber.Ctx) error {
+	request := new(model.ResetPasswordUserRequest)
+	err := ctx.BodyParser(request)
+	if err != nil {
+		c.Log.Warnf("Failed to parse request body : %+v", err)
+		return fiber.ErrBadRequest
+	}
+	request.Token = ctx.Params("token")
+
+	err = c.UseCase.ResetPassword(ctx.UserContext(), request)
+	if err != nil {
+		c.Log.Warnf("Failed to register user : %+v", err)
+		return err
+	}
+
+	return ctx.JSON(model.WebResponse{
+		Success: true,
+	})
 
 }

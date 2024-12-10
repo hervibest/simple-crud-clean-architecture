@@ -58,17 +58,9 @@ func (r *UserRepository) CreateOrUpdateVerificationToken(db *gorm.DB, email stri
 		Token:     token,
 	}
 
-	result := db.Model(&verificationToken).Where("email = ?", email).Updates(&verificationToken)
-	if result.Error != nil {
-		return result.Error
+	if err := db.Save(&verificationToken).Error; err != nil {
+		return err
 	}
-
-	if result.RowsAffected == 0 {
-		if err := db.Create(&verificationToken).Error; err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -95,17 +87,9 @@ func (r *UserRepository) CreateOrUpdateResetPasswordToken(db *gorm.DB, email str
 		Token:     token,
 	}
 
-	result := db.Model(&resetPasswordToken).Where("email = ?", email).Updates(&resetPasswordToken)
-	if result.Error != nil {
-		return result.Error
+	if err := db.Save(&resetPasswordToken).Error; err != nil {
+		return err
 	}
-
-	if result.RowsAffected == 0 {
-		if err := db.Create(&resetPasswordToken).Error; err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 

@@ -29,3 +29,19 @@ type VerifyEmailUserRequest struct {
 type ResendEmailUserRequest struct {
 	Email string `json:"email" validate:"required,email,max=100"`
 }
+
+type SendResetPasswordRequest struct {
+	Email string `json:"email" validate:"required,email,max=100"`
+	Token string `json:"token" validate:"required"`
+}
+
+type ValidateResetTokenRequest struct {
+	Email string `json:"email" validate:"required,max=100"`
+	Token string `json:"token" validate:"required"`
+}
+
+type ResetPasswordUserRequest struct {
+	Email    string `json:"email" validate:"required,max=100"`
+	Password string `json:"password" validate:"required,max=100"`
+	Token    string `json:"token" validate:"required"`
+}

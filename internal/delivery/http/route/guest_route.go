@@ -5,7 +5,9 @@ func (c *RouteConfig) SetupGuestRoute() {
 	userRoutes := c.App.Group("/api/user")
 	userRoutes.Post("/register", c.UserController.Register)
 	userRoutes.Post("/verify/:token", c.UserController.VerifyEmail)
-
 	userRoutes.Post("/request-resend-email", c.Throttle.ThrottleByKey("request-resend-email"), c.UserController.RequestEmailVerification)
 
+	userRoutes.Post("/reset-password/request", c.Throttle.ThrottleByKey("request-resend-password"), c.UserController.RequestResetPassword)
+	userRoutes.Post("/reset-password/validate", c.UserController.ValidateResetToken)
+	userRoutes.Post("/reset-password/reset/:token", c.UserController.ResetPassword)
 }
