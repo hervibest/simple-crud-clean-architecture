@@ -1,0 +1,1 @@
+drop table reset_password_tokens;

@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// User is a struct that represents a user entity
 type User struct {
 	ID           string     `gorm:"column:id;primaryKey;autoIncrement"`
 	UUID         uuid.UUID  `gorm:"column:uuid"`

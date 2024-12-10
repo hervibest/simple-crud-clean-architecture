@@ -6,4 +6,16 @@ func (c *RouteConfig) SetupUserRoute() {
 	userRoute.Patch("/update", c.UserController.Update)
 	userRoute.Get("/current", c.UserController.Current)
 	userRoute.Delete("/logout", c.UserController.Logout)
+
+	courseCategoryRoute := c.App.Group("/api/course-categories", c.AuthMiddleware)
+
+	courseCategoryRoute.Post("", c.CourseCatController.Create)
+	courseCategoryRoute.Get("/:courseCatID", c.CourseCatController.Get)
+	courseCategoryRoute.Put("/:courseCatID", c.CourseCatController.Update)
+
+	courseRoute := c.App.Group("/api/courses", c.AuthMiddleware)
+
+	courseRoute.Post("", c.CourseController.Create)
+	courseRoute.Put("/:courseID", c.CourseController.Update)
+
 }
