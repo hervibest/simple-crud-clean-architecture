@@ -31,12 +31,21 @@ type UpdateCourseRequest struct {
 }
 
 type CourseResponse struct {
-	UUID        uuid.UUID `json:"uuid,omitempty"`
-	Name        string    `json:"email,omitempty"`
-	Slug        string    `json:"slug,omitempty"`
-	Description string    `json:"description,omitempty"`
-	Price       float64   `json:"price,omitempty"`
-	IsActive    bool      `json:"is_active,omitempty"`
-	CreatedAt   time.Time `json:"created_at,omitempty"`
-	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+	UUID        uuid.UUID           `json:"uuid,omitempty"`
+	Name        string              `json:"name,omitempty"`
+	Slug        string              `json:"slug,omitempty"`
+	Description string              `json:"description,omitempty"`
+	Price       float64             `json:"price,omitempty"`
+	IsActive    bool                `json:"is_active,omitempty"`
+	Categories  []CourseCatResponse `json:"categories,omitempty"`
+	CreatedAt   time.Time           `json:"created_at,omitempty"`
+	UpdatedAt   time.Time           `json:"updated_at,omitempty"`
+}
+
+type SearchCourseRequest struct {
+	Name        string `json:"name" validate:"max=255"`
+	Slug        string `json:"slug" validate:"max=255"`
+	Description string `json:"description" validate:"max=255"`
+	Page        int    `json:"page" validate:"min=1"`
+	Size        int    `json:"size" validate:"min=1,max=100"`
 }

@@ -97,6 +97,27 @@ func (c *CourseUseCase) Create(ctx context.Context, request *model.CreateCourseR
 	return converter.CourseToResponse(course), nil
 }
 
+func (c *CourseUseCase) Search(ctx context.Context, request *model.SearchCourseRequest) ([]model.CourseResponse, *model.PageMetadata, error) {
+
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.WithError(err).Error("error validating request body")
+		return nil, nil, fiber.ErrBadRequest
+	}
+
+	courses, pageMetadata, err := c.CourseRepository.Search(c.DB, request, true)
+	if err != nil {
+		c.Log.WithError(err).Error("error getting course category")
+		return nil, nil, fiber.ErrInternalServerError
+	}
+
+	responses := make([]model.CourseResponse, len(courses))
+	for i, course := range courses {
+		responses[i] = *converter.CourseToResponse(&course)
+	}
+
+	return responses, pageMetadata, nil
+}
+
 func (c *CourseUseCase) Get(ctx context.Context, request *model.GetCourseRequest) (*model.CourseResponse, error) {
 
 	if err := c.Validate.Struct(request); err != nil {
@@ -104,8 +125,8 @@ func (c *CourseUseCase) Get(ctx context.Context, request *model.GetCourseRequest
 		return nil, fiber.ErrBadRequest
 	}
 
-	course := new(entity.Course)
-	if err := c.CourseRepository.FindByUUID(c.DB, course, request.UUID); err != nil {
+	course, err := c.CourseRepository.FindWithDetails(c.DB, request.UUID, true)
+	if err != nil {
 		c.Log.WithError(err).Error("error getting course")
 		return nil, fiber.ErrNotFound
 	}

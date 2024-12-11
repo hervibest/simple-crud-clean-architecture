@@ -1,6 +1,7 @@
 package http
 
 import (
+	"simple-crud-clean-architecture/internal/helper"
 	"simple-crud-clean-architecture/internal/model"
 	"simple-crud-clean-architecture/internal/usecase"
 
@@ -35,14 +36,36 @@ func (c *CourseCatController) Create(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	data := map[string]interface{}{
-		"course_category": response,
+	return ctx.JSON(model.DataResponse[*model.CourseCatResponse]{
+		Success: true,
+		Data:    response,
+	})
+}
+
+func (c *CourseCatController) List(ctx *fiber.Ctx) error {
+
+	request := &model.SearchCourseCatRequest{
+		Name:        ctx.Query("name", ""),
+		Slug:        ctx.Query("slug", ""),
+		Description: ctx.Query("description", ""),
+		Page:        ctx.QueryInt("page", 1),
+		Size:        ctx.QueryInt("size", 10),
 	}
 
-	return ctx.JSON(model.WebResponse{
-		Success: true,
-		Data:    data,
+	responses, pageMetadata, err := c.UseCase.Search(ctx.UserContext(), request)
+	if err != nil {
+		c.Log.WithError(err).Error("error searching course category")
+		return err
+	}
+
+	baseURL := ctx.BaseURL() + ctx.Path()
+	helper.GeneratePageURLs(baseURL, pageMetadata)
+
+	return ctx.JSON(model.DataResponse[[]model.CourseCatResponse]{Success: true,
+		Data:   responses,
+		Paging: pageMetadata,
 	})
+
 }
 
 func (c *CourseCatController) Get(ctx *fiber.Ctx) error {
@@ -58,18 +81,15 @@ func (c *CourseCatController) Get(ctx *fiber.Ctx) error {
 
 	response, err := c.UseCase.Get(ctx.UserContext(), request)
 	if err != nil {
-		c.Log.WithError(err).Error("error getting contact")
+		c.Log.WithError(err).Error("error getting course category")
 		return err
 	}
 
-	data := map[string]interface{}{
-		"course_category": response,
-	}
-
-	return ctx.JSON(model.WebResponse{
+	return ctx.JSON(model.DataResponse[*model.CourseCatResponse]{
 		Success: true,
-		Data:    data,
+		Data:    response,
 	})
+
 }
 
 func (c *CourseCatController) Update(ctx *fiber.Ctx) error {
@@ -94,17 +114,12 @@ func (c *CourseCatController) Update(ctx *fiber.Ctx) error {
 
 	response, err := c.UseCase.Update(ctx.UserContext(), request)
 	if err != nil {
-		c.Log.WithError(err).Error("error updating contact")
+		c.Log.WithError(err).Error("error updating course category")
 		return err
 	}
 
-	// Populate the Data map with multiple fields
-	data := map[string]interface{}{
-		"contact": response,
-	}
-
-	return ctx.JSON(model.WebResponse{
+	return ctx.JSON(model.DataResponse[*model.CourseCatResponse]{
 		Success: true,
-		Data:    data,
+		Data:    response,
 	})
 }

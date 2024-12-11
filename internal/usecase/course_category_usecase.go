@@ -76,6 +76,27 @@ func (c *CourseCatUseCase) Create(ctx context.Context, request *model.CreateCour
 	return converter.CourseCatToResponse(courseCategory), nil
 }
 
+func (c *CourseCatUseCase) Search(ctx context.Context, request *model.SearchCourseCatRequest) ([]model.CourseCatResponse, *model.PageMetadata, error) {
+
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.WithError(err).Error("error validating request body")
+		return nil, nil, fiber.ErrBadRequest
+	}
+
+	courseCats, pageMetadata, err := c.CourseCatRepository.Search(c.DB, request)
+	if err != nil {
+		c.Log.WithError(err).Error("error getting course category")
+		return nil, nil, fiber.ErrInternalServerError
+	}
+
+	responses := make([]model.CourseCatResponse, len(courseCats))
+	for i, courseCat := range courseCats {
+		responses[i] = *converter.CourseCatToResponse(&courseCat)
+	}
+
+	return responses, pageMetadata, nil
+}
+
 func (c *CourseCatUseCase) Get(ctx context.Context, request *model.GetCourseCatRequest) (*model.CourseCatResponse, error) {
 
 	if err := c.Validate.Struct(request); err != nil {

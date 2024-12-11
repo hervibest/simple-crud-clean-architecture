@@ -15,3 +15,14 @@ func CourseCatToResponse(courseCat *entity.CourseCategory) *model.CourseCatRespo
 		UpdatedAt:   courseCat.UpdatedAt,
 	}
 }
+
+func DTOCourseCatToResponse(courseCat entity.CourseCategory) model.CourseCatResponse {
+	return model.CourseCatResponse{
+		UUID:        courseCat.UUID,
+		Name:        courseCat.Name,
+		Slug:        courseCat.Slug,
+		Description: courseCat.Description,
+		CreatedAt:   courseCat.CreatedAt,
+		UpdatedAt:   courseCat.UpdatedAt,
+	}
+}
