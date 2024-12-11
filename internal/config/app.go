@@ -25,6 +25,7 @@ type BootstrapConfig struct {
 	Redis       *redis.Client
 	TokenHelper *helper.TokenHelper
 	EmailHelper *helper.GomailSender
+	Midtrans    *helper.MidtransClient
 }
 
 func Bootstrap(config *BootstrapConfig) {
@@ -32,17 +33,20 @@ func Bootstrap(config *BootstrapConfig) {
 	// setup repositories
 	userRepository := repository.NewUserRepository(config.Log)
 	courseCatRepository := repository.NewCourseCatRepository(config.Log)
-	courseRepositoru := repository.NewCourseRepository(config.Log)
+	courseRepository := repository.NewCourseRepository(config.Log)
+	transactionRepository := repository.NewTransactionRepository(config.Log)
 
 	// setup use cases
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, config.Redis, config.TokenHelper, config.EmailHelper)
 	courseCatUseCase := usecase.NewCourseCatUseCase(config.DB, config.Log, config.Validate, courseCatRepository)
-	courseUseCase := usecase.NewCourseUseCase(config.DB, config.Log, config.Validate, courseRepositoru, courseCatRepository)
+	courseUseCase := usecase.NewCourseUseCase(config.DB, config.Log, config.Validate, courseRepository, courseCatRepository)
+	transactionUseCase := usecase.NewTransactionUseCase(config.DB, config.Log, config.Validate, transactionRepository, courseRepository, config.Midtrans)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log)
 	courseCatController := http.NewCourseCatController(courseCatUseCase, config.Log)
 	courseController := http.NewCourseController(courseUseCase, config.Log)
+	transactionController := http.NewTransactionController(transactionUseCase, config.Log)
 
 	// setup throttle
 	throttle := middleware.NewThrottle(1, 60)
@@ -51,12 +55,15 @@ func Bootstrap(config *BootstrapConfig) {
 	middleware := middleware.NewAuth(userUseCase)
 
 	routeConfig := route.RouteConfig{
-		App:                 config.App,
-		UserController:      userController,
-		CourseCatController: courseCatController,
-		CourseController:    courseController,
-		Throttle:            throttle,
-		AuthMiddleware:      middleware,
+		App: config.App,
+
+		UserController:        userController,
+		CourseCatController:   courseCatController,
+		CourseController:      courseController,
+		TransactionController: transactionController,
+
+		Throttle:       throttle,
+		AuthMiddleware: middleware,
 	}
 	routeConfig.Setup()
 }

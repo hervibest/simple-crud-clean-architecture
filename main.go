@@ -15,6 +15,7 @@ func main() {
 
 	tokenHelper := helper.NewTokenHelper(viperConfig, log)
 	emailHelper := helper.NewGomailSender(viperConfig, log)
+	midtrans := helper.NewMidtransClient(viperConfig, log)
 
 	config.Bootstrap(&config.BootstrapConfig{
 		DB:          db,
@@ -25,6 +26,7 @@ func main() {
 		Redis:       redis,
 		TokenHelper: tokenHelper,
 		EmailHelper: emailHelper,
+		Midtrans:    midtrans,
 	})
 
 	webPort := viperConfig.GetInt("web.port")

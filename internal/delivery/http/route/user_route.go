@@ -21,4 +21,7 @@ func (c *RouteConfig) SetupUserRoute() {
 	courseRoute.Get("/:courseID", c.CourseController.Get)
 	courseRoute.Put("/:courseID", c.CourseController.Update)
 
+	transactionRoute := c.App.Group("/api/transaction", c.AuthMiddleware)
+	transactionRoute.Post("/buy", c.TransactionController.Buy)
+
 }

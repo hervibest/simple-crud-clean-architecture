@@ -394,7 +394,7 @@ func (c *UserUseCase) Verify(ctx context.Context, request *model.VerifyUserReque
 		return nil, fiber.ErrUnauthorized
 	}
 
-	return &model.Auth{UUID: user.UUID, Email: user.Email, Token: request.Token}, nil
+	return &model.Auth{UUID: user.UUID, Id : user.ID, Email: user.Email, Token: request.Token}, nil
 }
 
 func (c *UserUseCase) Logout(ctx context.Context, request *model.LogoutUserRequest) (bool, error) {

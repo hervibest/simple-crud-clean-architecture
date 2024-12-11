@@ -7,7 +7,7 @@ import (
 )
 
 type CourseCategory struct {
-	ID          string    `gorm:"column:id;primaryKey;autoIncrement"`
+	ID          int       `gorm:"column:id;primaryKey;autoIncrement"`
 	UUID        uuid.UUID `gorm:"column:uuid"`
 	Name        string    `gorm:"column:name"`
 	Slug        string    `gorm:"column:slug"`
