@@ -21,12 +21,6 @@ func NewCourseRepository(log *logrus.Logger) *CourseRepository {
 	}
 }
 
-func (r *CourseRepository) CountByName(db *gorm.DB, email string) (int64, error) {
-	var total int64
-	err := db.Model(new(entity.Course)).Where("name = ?", email).Count(&total).Error
-	return total, err
-}
-
 func (r *CourseRepository) CountByNameAndNotID(db *gorm.DB, name string, excludeUUID uuid.UUID) (int64, error) {
 	var total int64
 	err := db.Model(new(entity.Course)).
