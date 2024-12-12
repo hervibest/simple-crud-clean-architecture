@@ -32,22 +32,38 @@ func GetUser(ctx *fiber.Ctx) *model.Auth {
 	return ctx.Locals("auth").(*model.Auth)
 }
 
-func BuyableCourse(courseUseCase *usecase.CourseUseCase) fiber.Handler {
+func NewBuyableCourse(courseUseCase *usecase.CourseUseCase) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 
-		request := new(model.GetCourseRequest)
-		parsedUUID, err := uuid.Parse(ctx.Params("courseID"))
-		if err != nil {
-			return fiber.ErrBadRequest
+		request := new(model.CreateTransactionRequest)
+		if err := ctx.BodyParser(request); err != nil {
+			return fiber.NewError(fiber.StatusNotFound, "invalid uuid")
 		}
 
-		request.UUID = parsedUUID
-		_, err = courseUseCase.Get(ctx.UserContext(), request)
+		courseRequest := new(model.GetCourseRequest)
+		parsedUUID, err := uuid.Parse(request.CourseUUIDStr)
 		if err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, "invalid course uuid")
-
+			return fiber.NewError(fiber.StatusNotFound, "invalid parsing uuid")
 		}
 
+		courseRequest.UUID = parsedUUID
+		_, err = courseUseCase.Get(ctx.UserContext(), courseRequest)
+		if err != nil {
+			return fiber.NewError(fiber.StatusNotFound, "invalid course uuid")
+		}
+
+		auth := GetUser(ctx)
+
+		purchasedRequest := new(model.GetPurchasedCourseRequest)
+		purchasedRequest.UserID = auth.Id
+
+		courses, _ := courseUseCase.GetPurchasedCourseUUID(ctx.UserContext(), purchasedRequest)
+		for _, course := range courses {
+			if course.UUID == parsedUUID {
+				return fiber.NewError(fiber.StatusBadRequest, "course already purchased")
+			}
+
+		}
 		return ctx.Next()
 	}
 }

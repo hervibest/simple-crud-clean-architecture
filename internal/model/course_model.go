@@ -19,6 +19,10 @@ type GetCourseRequest struct {
 	UUID uuid.UUID `json:"uuid,omitempty" validate:"required"`
 }
 
+type GetPurchasedCourseRequest struct {
+	UserID int `validate:"required"`
+}
+
 type UpdateCourseRequest struct {
 	UUID          uuid.UUID `json:"uuid,omitempty" validate:"required"`
 	Name          string    `json:"name" validate:"required,max=255"`
@@ -48,4 +52,17 @@ type SearchCourseRequest struct {
 	Description string `json:"description" validate:"max=255"`
 	Page        int    `json:"page" validate:"min=1"`
 	Size        int    `json:"size" validate:"min=1,max=100"`
+}
+
+type SearchPurchasedCourse struct {
+	UserID      int    `validate:"required"`
+	Name        string `json:"name" validate:"max=255"`
+	Slug        string `json:"slug" validate:"max=255"`
+	Description string `json:"description" validate:"max=255"`
+	Page        int    `json:"page" validate:"min=1"`
+	Size        int    `json:"size" validate:"min=1,max=100"`
+}
+
+type CourseUUIDresponse struct {
+	UUID uuid.UUID `json:"uuid,omitempty"`
 }

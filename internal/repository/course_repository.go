@@ -98,3 +98,43 @@ func (r *CourseRepository) FilterCourse(request *model.SearchCourseRequest) func
 		return tx
 	}
 }
+
+func (r *CourseRepository) GetPurchasedCourseUUID(db *gorm.DB, userId int) ([]entity.Course, error) {
+	var courses []entity.Course
+
+	if err := db.Table("courses").
+		Select("courses.uuid").
+		Joins("JOIN course_user ON course_user.course_id = courses.id").
+		Where("course_user.user_id = ?", userId).
+		Find(&courses).Error; err != nil {
+		return nil, err
+	}
+	return courses, nil
+}
+
+func (r *CourseRepository) UserGetPurchasedCourse(db *gorm.DB, request *model.SearchCourseRequest, userID int) ([]entity.Course, *model.PageMetadata, error) {
+	var courses []entity.Course
+
+	var totalItems int64
+	if err := db.Model(&entity.Course{}).
+		Scopes(r.FilterCourse(request)).
+		Joins("JOIN course_user ON course_user.course_id = courses.id").
+		Where("course_user.user_id = ?", userID).
+		Count(&totalItems).Error; err != nil {
+		return nil, nil, err
+	}
+
+	pageMetadata := helper.CalculatePagination(totalItems, request.Page, request.Size)
+
+	if err := db.Model(&entity.Course{}).
+		Scopes(r.FilterCourse(request)).
+		Joins("JOIN course_user ON course_user.course_id = courses.id").
+		Where("course_user.user_id = ?", userID).
+		Offset(pageMetadata.Offset).
+		Limit(pageMetadata.Size).
+		Find(&courses).Error; err != nil {
+		return nil, nil, err
+	}
+
+	return courses, pageMetadata, nil
+}

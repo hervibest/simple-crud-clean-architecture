@@ -21,3 +21,9 @@ func CourseToResponse(course *entity.Course) *model.CourseResponse {
 		UpdatedAt:   course.UpdatedAt,
 	}
 }
+
+func CourseUUIDToResponse(course *entity.Course) *model.CourseUUIDresponse {
+	return &model.CourseUUIDresponse{
+		UUID: course.UUID,
+	}
+}

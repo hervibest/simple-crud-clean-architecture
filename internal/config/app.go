@@ -58,6 +58,7 @@ func Bootstrap(config *BootstrapConfig) {
 
 	//setup
 	userAuthMiddleware := middleware.NewUserAuth(userUseCase)
+	buyableCourseMiddleware := middleware.NewBuyableCourse(courseUseCase)
 	employeeAuthMiddleware := middleware.NewEmployeeAuth(employeeUseCase)
 
 	routeConfig := route.RouteConfig{
@@ -70,9 +71,10 @@ func Bootstrap(config *BootstrapConfig) {
 		CourseController:      courseController,
 		TransactionController: transactionController,
 
-		Throttle:               throttle,
-		UserAuthMiddleware:     userAuthMiddleware,
-		EmployeeAuthMiddleware: employeeAuthMiddleware,
+		Throttle:                throttle,
+		UserAuthMiddleware:      userAuthMiddleware,
+		BuyableCourseMiddleware: buyableCourseMiddleware,
+		EmployeeAuthMiddleware:  employeeAuthMiddleware,
 	}
 	routeConfig.Setup()
 }

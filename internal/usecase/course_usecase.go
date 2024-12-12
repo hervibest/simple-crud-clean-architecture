@@ -205,3 +205,45 @@ func (c *CourseUseCase) Update(ctx context.Context, request *model.UpdateCourseR
 
 	return converter.CourseToResponse(course), nil
 }
+
+func (c *CourseUseCase) GetPurchasedCourseUUID(ctx context.Context, request *model.GetPurchasedCourseRequest) ([]model.CourseUUIDresponse, error) {
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.WithError(err).Error("error validating request body")
+		return nil, fiber.ErrBadRequest
+	}
+
+	courses, err := c.CourseRepository.GetPurchasedCourseUUID(c.DB, request.UserID)
+	if err != nil {
+		c.Log.WithError(err).Error("error getting user purchased course")
+		return nil, fiber.ErrNotFound
+	}
+
+	responses := make([]model.CourseUUIDresponse, len(courses))
+	for i, course := range courses {
+		responses[i] = *converter.CourseUUIDToResponse(&course)
+	}
+
+	return responses, nil
+
+}
+
+func (c *CourseUseCase) UserGetPurchasedCourse(ctx context.Context, request *model.SearchCourseRequest, userID int) ([]model.CourseResponse, *model.PageMetadata, error) {
+	if err := c.Validate.Struct(request); err != nil {
+		c.Log.WithError(err).Error("error validating request body")
+		return nil, nil, fiber.ErrBadRequest
+	}
+
+	courses, pageMetadata, err := c.CourseRepository.UserGetPurchasedCourse(c.DB, request, userID)
+	if err != nil {
+		c.Log.WithError(err).Error("error getting user purchased course")
+		return nil, nil, fiber.ErrNotFound
+	}
+
+	responses := make([]model.CourseResponse, len(courses))
+	for i, course := range courses {
+		responses[i] = *converter.CourseToResponse(&course)
+	}
+
+	return responses, pageMetadata, nil
+
+}

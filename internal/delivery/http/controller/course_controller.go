@@ -1,6 +1,7 @@
 package http
 
 import (
+	"simple-crud-clean-architecture/internal/delivery/http/middleware"
 	"simple-crud-clean-architecture/internal/helper"
 	"simple-crud-clean-architecture/internal/model"
 	"simple-crud-clean-architecture/internal/usecase"
@@ -137,4 +138,33 @@ func (c *CourseController) Update(ctx *fiber.Ctx) error {
 		Success: true,
 		Data:    response,
 	})
+}
+
+func (c *CourseController) ListUserPurchased(ctx *fiber.Ctx) error {
+
+	request := &model.SearchCourseRequest{
+		Name:        ctx.Query("name", ""),
+		Slug:        ctx.Query("slug", ""),
+		Description: ctx.Query("description", ""),
+		Page:        ctx.QueryInt("page", 1),
+		Size:        ctx.QueryInt("size", 10),
+	}
+
+	auth := middleware.GetUser(ctx)
+	userId := auth.Id
+
+	responses, pageMetadata, err := c.UseCase.UserGetPurchasedCourse(ctx.UserContext(), request, userId)
+	if err != nil {
+		c.Log.WithError(err).Error("error searching course")
+		return err
+	}
+
+	baseURL := ctx.BaseURL() + ctx.Path()
+	helper.GeneratePageURLs(baseURL, pageMetadata)
+
+	return ctx.JSON(model.DataResponse[[]model.CourseResponse]{Success: true,
+		Data:   responses,
+		Paging: pageMetadata,
+	})
+
 }

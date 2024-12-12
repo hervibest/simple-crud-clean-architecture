@@ -15,9 +15,10 @@ type RouteConfig struct {
 	CourseController      *http.CourseController
 	TransactionController *http.TransactionController
 
-	Throttle               *middleware.Throttle
-	UserAuthMiddleware     fiber.Handler
-	EmployeeAuthMiddleware fiber.Handler
+	Throttle                *middleware.Throttle
+	UserAuthMiddleware      fiber.Handler
+	BuyableCourseMiddleware fiber.Handler
+	EmployeeAuthMiddleware  fiber.Handler
 }
 
 func (c *RouteConfig) Setup() {
