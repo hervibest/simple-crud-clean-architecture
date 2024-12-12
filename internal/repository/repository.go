@@ -38,3 +38,9 @@ func (r *Repository[T]) CountByEmail(db *gorm.DB, email any) (int64, error) {
 	err := db.Model(new(T)).Where("email = ?", email).Count(&total).Error
 	return total, err
 }
+
+func (r *Repository[T]) CountByName(db *gorm.DB, email string) (int64, error) {
+	var total int64
+	err := db.Model(new(T)).Where("name = ?", email).Count(&total).Error
+	return total, err
+}
