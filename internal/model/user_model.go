@@ -52,7 +52,7 @@ type LoginUserRequest struct {
 }
 
 type GetUserRequest struct {
-	Email string `json:"email" validate:"required,max=100"`
+	Email string `validate:"required,max=100"`
 }
 
 type VerifyUserRequest struct {

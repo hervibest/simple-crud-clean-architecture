@@ -19,16 +19,6 @@ func NewUserRepository(log *logrus.Logger) *UserRepository {
 	}
 }
 
-func (r *UserRepository) CountByEmail(db *gorm.DB, email any) (int64, error) {
-	var total int64
-	err := db.Model(new(entity.User)).Where("email = ?", email).Count(&total).Error
-	return total, err
-}
-
-func (r *UserRepository) FindByEmail(db *gorm.DB, user *entity.User, email string) error {
-	return db.Where("email = ?", email).Take(user).Error
-}
-
 func (r *UserRepository) GetVerificationTokenByEmail(
 	db *gorm.DB,
 	verifToken *entity.VerificationToken,
