@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"simple-crud-clean-architecture/internal/entity"
 	"simple-crud-clean-architecture/internal/helper"
 	"simple-crud-clean-architecture/internal/model"
@@ -79,8 +78,6 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 		VerifiedAt: nil,
 	}
 
-	fmt.Println(user)
-
 	if err := c.UserRepository.Create(tx, user); err != nil {
 		c.Log.Warnf("Failed create user to database : %+v", err)
 		return nil, fiber.ErrInternalServerError
@@ -118,7 +115,6 @@ func (c *UserUseCase) RequestEmailVerification(ctx context.Context, email string
 	}
 
 	token := uuid.New().String()
-	fmt.Println(token)
 	if err := c.UserRepository.CreateOrUpdateVerificationToken(tx, email, token); err != nil {
 		c.Log.Warnf("Failed to create verification token: %+v", err)
 		return fiber.ErrInternalServerError
@@ -235,7 +231,6 @@ func (c *UserUseCase) ValidateResetToken(ctx context.Context, request *model.Val
 	}
 
 	request.Token = decryptedToken
-	fmt.Println(request)
 
 	resetPasswordToken := new(entity.ResetPasswordToken)
 	if err := c.UserRepository.GetResetPasswordTokenByEmail(tx, resetPasswordToken, request.Email, request.Token); err != nil {
@@ -265,7 +260,6 @@ func (c *UserUseCase) ResetPassword(ctx context.Context, request *model.ResetPas
 	}
 
 	request.Token = decryptedToken
-	fmt.Println(request)
 
 	resetPasswordToken := new(entity.ResetPasswordToken)
 	if err := c.UserRepository.GetResetPasswordTokenByEmail(tx, resetPasswordToken, request.Email, request.Token); err != nil {
@@ -394,7 +388,7 @@ func (c *UserUseCase) Verify(ctx context.Context, request *model.VerifyUserReque
 		return nil, fiber.ErrUnauthorized
 	}
 
-	return &model.Auth{UUID: user.UUID, Id : user.ID, Email: user.Email, Token: request.Token}, nil
+	return &model.Auth{UUID: user.UUID, Id: user.ID, Email: user.Email, Token: request.Token}, nil
 }
 
 func (c *UserUseCase) Logout(ctx context.Context, request *model.LogoutUserRequest) (bool, error) {

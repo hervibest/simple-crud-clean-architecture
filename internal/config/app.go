@@ -40,13 +40,13 @@ func Bootstrap(config *BootstrapConfig) {
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, config.Redis, config.TokenHelper, config.EmailHelper)
 	courseCatUseCase := usecase.NewCourseCatUseCase(config.DB, config.Log, config.Validate, courseCatRepository)
 	courseUseCase := usecase.NewCourseUseCase(config.DB, config.Log, config.Validate, courseRepository, courseCatRepository)
-	transactionUseCase := usecase.NewTransactionUseCase(config.DB, config.Log, config.Validate, transactionRepository, courseRepository, config.Midtrans)
+	transactionUseCase := usecase.NewTransactionUseCase(config.DB, config.Log, config.Validate, transactionRepository, courseRepository, userRepository, config.Midtrans)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log)
 	courseCatController := http.NewCourseCatController(courseCatUseCase, config.Log)
 	courseController := http.NewCourseController(courseUseCase, config.Log)
-	transactionController := http.NewTransactionController(transactionUseCase, config.Log)
+	transactionController := http.NewTransactionController(transactionUseCase, config.Log, config.Midtrans)
 
 	// setup throttle
 	throttle := middleware.NewThrottle(1, 60)

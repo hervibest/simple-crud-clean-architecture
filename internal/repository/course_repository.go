@@ -40,7 +40,7 @@ func (r *CourseRepository) ClearCategory(db *gorm.DB, course *entity.Course) err
 }
 
 func (r *CourseRepository) SyncCategory(db *gorm.DB, course *entity.Course, categories []*entity.CourseCategory) error {
-	return db.Model(course).Association("Categories").Replace(categories)
+	return db.Model(course).Association("Categories").Append(categories)
 }
 
 func (r *CourseRepository) FindWithDetails(db *gorm.DB, uuid uuid.UUID, withCategories bool) (*entity.Course, error) {

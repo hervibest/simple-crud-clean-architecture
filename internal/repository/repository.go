@@ -24,3 +24,7 @@ func (r *Repository[T]) Delete(db *gorm.DB, entity *T) error {
 func (r *Repository[T]) FindByUUID(db *gorm.DB, model *T, uuid uuid.UUID) error {
 	return db.Where("uuid = ?", uuid).Take(model).Error
 }
+
+func (r *Repository[T]) FindById(db *gorm.DB, model *T, id int) error {
+	return db.Where("id = ?", id).Take(model).Error
+}

@@ -178,11 +178,11 @@ func (c *CourseUseCase) Update(ctx context.Context, request *model.UpdateCourseR
 			c.Log.WithError(err).Error("error clearing course categories")
 			return nil, fiber.ErrInternalServerError
 		}
-	} else if request.CategoryUUIDs != nil {
+	} else if len(request.CategoryUUIDs) > 0 {
 		courseCategories, err := c.CourseCatRepository.FindManyByUUIDs(tx, request.CategoryUUIDs)
 		if err != nil {
-			c.Log.WithError(err).Error("error finding course categories")
-			return nil, fiber.ErrInternalServerError
+			c.Log.WithError(err).Error("error finding course categories UUIDs")
+			return nil, fiber.NewError(fiber.StatusBadRequest, "course categories UUIDs not valid")
 		}
 
 		if err := c.CourseRepository.ClearCategory(tx, course); err != nil {
@@ -200,6 +200,8 @@ func (c *CourseUseCase) Update(ctx context.Context, request *model.UpdateCourseR
 		c.Log.WithError(err).Error("error updating contact")
 		return nil, fiber.ErrInternalServerError
 	}
+
+	c.Log.Infof("Course updated : %+v", course)
 
 	return converter.CourseToResponse(course), nil
 }

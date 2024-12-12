@@ -117,3 +117,7 @@ func (r *UserRepository) ResetPassword(db *gorm.DB, resetPasswordTokenDetails *e
 		return nil
 	})
 }
+
+func (r *UserRepository) AppendCourse(db *gorm.DB, user *entity.User, course *entity.Course) error {
+	return db.Model(user).Association("Courses").Append(course)
+}

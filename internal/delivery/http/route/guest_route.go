@@ -12,4 +12,7 @@ func (c *RouteConfig) SetupGuestRoute() {
 	userRoutes.Post("/reset-password/request", c.Throttle.ThrottleByKey("request-resend-password"), c.UserController.RequestResetPassword)
 	userRoutes.Post("/reset-password/validate", c.UserController.ValidateResetToken)
 	userRoutes.Post("/reset-password/reset/:token", c.UserController.ResetPassword)
+
+	c.App.Post("/api/webhook/notify", c.TransactionController.Notify)
+
 }

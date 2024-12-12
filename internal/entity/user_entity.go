@@ -17,6 +17,7 @@ type User struct {
 	AccessToken  string        `gorm:"-"`
 	RefreshToken string        `gorm:"-"`
 	Transaction  []Transaction `gorm:"foreignKey:user_id;references:id"`
+	Courses      []Course      `gorm:"many2many:course_user;foreignKey:id;joinForeignKey:user_id;references:id;joinReferences:course_id"`
 }
 
 func (u *User) TableName() string {

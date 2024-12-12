@@ -23,5 +23,6 @@ func (c *RouteConfig) SetupUserRoute() {
 
 	transactionRoute := c.App.Group("/api/transaction", c.AuthMiddleware)
 	transactionRoute.Post("/buy", c.TransactionController.Buy)
+	transactionRoute.Get("/:trxId", c.TransactionController.GetTransaction)
 
 }

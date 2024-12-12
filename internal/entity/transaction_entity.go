@@ -16,11 +16,15 @@ type Transaction struct {
 	Amount   float64                `gorm:"column:amount"`
 	Status   enum.TransactionStatus `gorm:"column:status"`
 
-	SnapToken                string          `gorm:"column:snap_token"`
-	ExternalStatus           string          `gorm:"column:external_status"`
-	ExternalCallbackResponse json.RawMessage `gorm:"column:external_callback_response"`
-	CreatedAt                time.Time       `gorm:"column:created_at;autoCreateTime"`
-	UpdatedAt                time.Time       `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
+	User   User   `gorm:"foreignKey:user_id"`
+	Course Course `gorm:"foreignKey:course_id"`
+
+	SnapToken                string                     `gorm:"column:snap_token"`
+	ExternalStatus           enum.MidtransPaymentStatus `gorm:"column:external_status"`
+	ExternalCallbackResponse json.RawMessage            `gorm:"column:external_callback_response"`
+	PaidAt                   time.Time                  `gorm:"column:paid_at"`
+	CreatedAt                time.Time                  `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt                time.Time                  `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 }
 
 func (u *Transaction) TableName() string {

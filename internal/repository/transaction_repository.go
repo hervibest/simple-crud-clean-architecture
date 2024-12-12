@@ -2,8 +2,8 @@ package repository
 
 import (
 	"simple-crud-clean-architecture/internal/entity"
-	"simple-crud-clean-architecture/internal/enum"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -19,6 +19,20 @@ func NewTransactionRepository(log *logrus.Logger) *TransactionRepository {
 	}
 }
 
-func (r *TransactionRepository) UpdateTransactionStatus(db *gorm.DB, transaction *entity.Transaction, id int, status enum.TransactionStatus) error {
-	return db.Model(transaction).Where("id = ?", id).Update("status", status).Error
+func (r *TransactionRepository) FindByTrxID(db *gorm.DB, transaction *entity.Transaction, trxID uuid.UUID) error {
+	return db.Where("trx_id = ?", trxID).First(transaction).Error
+}
+
+func (r *TransactionRepository) GetTransactionWithDetails(db *gorm.DB, trxID uuid.UUID) (*entity.Transaction, error) {
+	var transaction entity.Transaction
+
+	err := db.Joins("User").Joins("Course").
+		Where("trx_id = ?", trxID).
+		First(&transaction).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &transaction, nil
 }
