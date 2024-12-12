@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func NewAuth(userUseCase *usecase.UserUseCase) fiber.Handler {
+func NewUserAuth(userUseCase *usecase.UserUseCase) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 
 		token := strings.TrimPrefix(ctx.Get("Authorization", ""), "Bearer ")

@@ -10,15 +10,18 @@ import (
 type RouteConfig struct {
 	App                   *fiber.App
 	UserController        *http.UserController
+	EmployeeController    *http.EmployeeController
 	CourseCatController   *http.CourseCatController
 	CourseController      *http.CourseController
 	TransactionController *http.TransactionController
 
-	Throttle       *middleware.Throttle
-	AuthMiddleware fiber.Handler
+	Throttle               *middleware.Throttle
+	UserAuthMiddleware     fiber.Handler
+	EmployeeAuthMiddleware fiber.Handler
 }
 
 func (c *RouteConfig) Setup() {
 	c.SetupGuestRoute()
 	c.SetupUserRoute()
+	c.SetupEmployeeRoute()
 }

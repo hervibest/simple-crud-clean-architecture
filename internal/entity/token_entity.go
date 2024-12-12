@@ -22,3 +22,11 @@ type RefreshToken struct {
 	UpdatedAt *time.Time
 	ExpiresAt time.Time
 }
+
+type EmployeeAccessToken struct {
+	EmployeeUUID uuid.UUID
+	Token        string
+	CreatedAt    *time.Time
+	UpdatedAt    *time.Time
+	ExpiresAt    time.Time
+}

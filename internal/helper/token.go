@@ -31,8 +31,9 @@ type Secret struct {
 }
 
 type ExpireTime struct {
-	AccessToken  time.Duration
-	RefreshToken time.Duration
+	AccessToken         time.Duration
+	RefreshToken        time.Duration
+	EmployeeAccessToken time.Duration
 }
 
 func NewTokenHelper(config *viper.Viper, log *logrus.Logger) *TokenHelper {
@@ -46,14 +47,36 @@ func NewTokenHelper(config *viper.Viper, log *logrus.Logger) *TokenHelper {
 	}
 
 	expireTime := &ExpireTime{
-		AccessToken:  time.Duration(config.GetInt("app.access_token_expire_in_minute")),
-		RefreshToken: time.Duration(config.GetInt("app.refresh_token_expire_in_day")),
+		AccessToken:         time.Duration(config.GetInt("app.access_token_expire_in_minute")),
+		RefreshToken:        time.Duration(config.GetInt("app.refresh_token_expire_in_day")),
+		EmployeeAccessToken: time.Duration(config.GetInt("app.employee_access_token_expire_in_day")),
 	}
 
 	return &TokenHelper{
 		secret:     secret,
 		expireTime: expireTime,
 	}
+}
+
+func (c *TokenHelper) GenerateEmployeeAccessToken(employeeUUID uuid.UUID) (*entity.EmployeeAccessToken, error) {
+	expirationTime := time.Now().Add(time.Hour * 24 * c.expireTime.EmployeeAccessToken)
+
+	claims := jwt.MapClaims{}
+	claims["authorized"] = true
+	claims["employee_uuid"] = employeeUUID
+	claims["exp"] = expirationTime.Unix()
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	stringToken, err := token.SignedString(c.secret.accessSecretByte)
+	if err != nil {
+		return nil, err
+	}
+
+	return &entity.EmployeeAccessToken{
+		EmployeeUUID: employeeUUID,
+		Token:        stringToken,
+		ExpiresAt:    expirationTime,
+	}, nil
 }
 
 func (c *TokenHelper) GenerateAccessToken(userUUID uuid.UUID) (*entity.AccessToken, error) {
@@ -95,6 +118,44 @@ func (c *TokenHelper) GenerateRefreshToken(userUUID uuid.UUID) (*entity.RefreshT
 		Token:     stringToken,
 		ExpiresAt: expirationTime,
 	}, nil
+}
+
+func (c *TokenHelper) VerifyEmployeeAccessToken(token string) (*entity.EmployeeAccessToken, error) {
+
+	tokenClaims, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		return c.secret.accessSecretByte, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	accessTokenDetails := &entity.EmployeeAccessToken{}
+	claims, ok := tokenClaims.Claims.(jwt.MapClaims)
+	if ok && tokenClaims.Valid {
+		employeeIDStr, ok := claims["employee_uuid"].(string)
+		if !ok {
+			fmt.Println("employee_uuid not a string")
+			return nil, errors.New("invalid token claims")
+		}
+
+		employeeUUID, err := uuid.Parse(employeeIDStr)
+		if err != nil {
+			fmt.Println("failed to parse uuid:", err)
+			return nil, errors.New("invalid token claims")
+		}
+
+		accessTokenDetails.EmployeeUUID = employeeUUID
+		expFloat, ok := claims["exp"].(float64)
+		if !ok {
+			return nil, errors.New("invalid exp in token claims")
+		}
+
+		expiresAt := time.Unix(int64(expFloat), 0)
+		accessTokenDetails.ExpiresAt = expiresAt
+	}
+
+	return accessTokenDetails, nil
+
 }
 
 func (c *TokenHelper) VerifyAccessToken(token string) (*entity.AccessToken, error) {
