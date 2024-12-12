@@ -29,3 +29,6 @@ go-build/
 tmp/
 
 config.json
+
+# Setup
+setup_pc_hervi.md
