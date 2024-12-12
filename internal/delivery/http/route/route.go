@@ -13,6 +13,7 @@ type RouteConfig struct {
 	EmployeeController    *http.EmployeeController
 	CourseCatController   *http.CourseCatController
 	CourseController      *http.CourseController
+	CourseSecController   *http.CourseSectionController
 	TransactionController *http.TransactionController
 
 	Throttle                *middleware.Throttle
