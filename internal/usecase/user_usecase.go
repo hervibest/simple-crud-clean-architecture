@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"simple-crud-clean-architecture/internal/entity"
 	"simple-crud-clean-architecture/internal/helper"
 	"simple-crud-clean-architecture/internal/model"
@@ -78,6 +79,8 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 		VerifiedAt: nil,
 	}
 
+	fmt.Println(user)
+
 	if err := c.UserRepository.Create(tx, user); err != nil {
 		c.Log.Warnf("Failed create user to database : %+v", err)
 		return nil, fiber.ErrInternalServerError
@@ -87,6 +90,8 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 		c.Log.Warnf("Failed commit transaction : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
+
+	c.Log.Infof("User with email: %+v successfully created their account", request.Email)
 
 	return converter.UserToResponse(user), nil
 }
@@ -115,6 +120,7 @@ func (c *UserUseCase) RequestEmailVerification(ctx context.Context, email string
 	}
 
 	token := uuid.New().String()
+	fmt.Println(token)
 	if err := c.UserRepository.CreateOrUpdateVerificationToken(tx, email, token); err != nil {
 		c.Log.Warnf("Failed to create verification token: %+v", err)
 		return fiber.ErrInternalServerError
@@ -137,6 +143,8 @@ func (c *UserUseCase) RequestEmailVerification(ctx context.Context, email string
 		c.Log.Warnf("Failed to send Email: %+v", err)
 	}
 
+	c.Log.Infof("User with email: %+v successfully send their verification email", email)
+
 	return nil
 }
 
@@ -153,7 +161,7 @@ func (c *UserUseCase) VerifyEmail(ctx context.Context, request *model.VerifyEmai
 	decryptedToken, err := c.TokenHelper.Decrypt(request.Token)
 	if err != nil {
 		c.Log.Warnf("failed to register user : %+v", err)
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to validate request body")
+		return fiber.NewError(fiber.StatusBadRequest, "invalid token")
 	}
 
 	request.Token = decryptedToken
@@ -177,6 +185,9 @@ func (c *UserUseCase) VerifyEmail(ctx context.Context, request *model.VerifyEmai
 		c.Log.Warnf("Failed commit transaction : %+v", err)
 		return fiber.ErrInternalServerError
 	}
+
+	c.Log.Infof("User with email: %+v successfully verified their email", request.Email)
+
 	return nil
 }
 
@@ -213,6 +224,8 @@ func (c *UserUseCase) RequestResetPassword(ctx context.Context, email string, ne
 		c.Log.Warnf("Failed to send Email: %+v", err)
 	}
 
+	c.Log.Infof("User with email: %+v successfully send a reset password request", email)
+
 	return nil
 }
 
@@ -231,6 +244,7 @@ func (c *UserUseCase) ValidateResetToken(ctx context.Context, request *model.Val
 	}
 
 	request.Token = decryptedToken
+	fmt.Println(request)
 
 	resetPasswordToken := new(entity.ResetPasswordToken)
 	if err := c.UserRepository.GetResetPasswordTokenByEmail(tx, resetPasswordToken, request.Email, request.Token); err != nil {
@@ -260,6 +274,7 @@ func (c *UserUseCase) ResetPassword(ctx context.Context, request *model.ResetPas
 	}
 
 	request.Token = decryptedToken
+	fmt.Println(request)
 
 	resetPasswordToken := new(entity.ResetPasswordToken)
 	if err := c.UserRepository.GetResetPasswordTokenByEmail(tx, resetPasswordToken, request.Email, request.Token); err != nil {
@@ -287,6 +302,9 @@ func (c *UserUseCase) ResetPassword(ctx context.Context, request *model.ResetPas
 		c.Log.Warnf("Failed commit transaction : %+v", err)
 		return fiber.ErrInternalServerError
 	}
+
+	c.Log.Infof("User with email: %+v successfully reset their password", request.Email)
+
 	return nil
 }
 
@@ -342,6 +360,8 @@ func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequest
 		return nil, fiber.ErrInternalServerError
 	}
 
+	c.Log.Infof("User with email: %+v successfully login", request.Email)
+
 	return converter.UserToTokenResponse(user), nil
 }
 
@@ -388,6 +408,8 @@ func (c *UserUseCase) Verify(ctx context.Context, request *model.VerifyUserReque
 		return nil, fiber.ErrUnauthorized
 	}
 
+	c.Log.Infof("User with email: %+v successfully authenticated and authorized", user.Email)
+
 	return &model.Auth{UUID: user.UUID, Id: user.ID, Email: user.Email, Token: request.Token}, nil
 }
 
@@ -421,6 +443,8 @@ func (c *UserUseCase) Logout(ctx context.Context, request *model.LogoutUserReque
 		c.Log.Warnf("Failed to commit transaction : %+v", err)
 		return false, fiber.ErrInternalServerError
 	}
+
+	c.Log.Infof("User with email: %+v successfully logout", user.Email)
 
 	return true, nil
 }
@@ -477,6 +501,8 @@ func (c *UserUseCase) AccessTokenRequest(ctx context.Context, request *model.Acc
 	} else {
 		user.RefreshToken = request.Token
 	}
+
+	c.Log.Infof("User with email: %+v successfully requested access token", user.Email)
 
 	return converter.UserToTokenResponse(user), nil
 }
