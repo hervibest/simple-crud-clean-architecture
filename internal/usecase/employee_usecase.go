@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"simple-crud-clean-architecture/internal/entity"
 	"simple-crud-clean-architecture/internal/helper"
 	"simple-crud-clean-architecture/internal/model"
@@ -130,7 +129,6 @@ func (c *EmployeeUseCase) Login(ctx context.Context, request *model.LoginEmploye
 
 func (c *EmployeeUseCase) Verify(ctx context.Context, request *model.VerifyEmployeeRequest) (*model.Auth, error) {
 
-	fmt.Println("Verify")
 	err := c.Validate.Struct(request)
 	if err != nil {
 		c.Log.Warnf("Invalid request body : %+v", err)
