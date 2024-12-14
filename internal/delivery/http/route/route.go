@@ -8,12 +8,14 @@ import (
 )
 
 type RouteConfig struct {
-	App                   *fiber.App
-	UserController        *http.UserController
-	EmployeeController    *http.EmployeeController
-	CourseCatController   *http.CourseCatController
-	CourseController      *http.CourseController
-	CourseSecController   *http.CourseSectionController
+	App                 *fiber.App
+	UserController      *http.UserController
+	EmployeeController  *http.EmployeeController
+	CourseCatController *http.CourseCatController
+	CourseController    *http.CourseController
+	CourseSecController *http.CourseSectionController
+	SecVideoController  *http.SectionVideoController
+
 	TransactionController *http.TransactionController
 
 	Throttle                *middleware.Throttle

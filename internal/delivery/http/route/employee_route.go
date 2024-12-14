@@ -19,6 +19,14 @@ func (c *RouteConfig) SetupEmployeeRoute() {
 
 	courseSectionRoute := courseRoute.Group("/section", c.EmployeeAuthMiddleware)
 
+	sectionVideoRoute := courseSectionRoute.Group("/video", c.EmployeeAuthMiddleware)
+
+	sectionVideoRoute.Get("", c.SecVideoController.List)
+	sectionVideoRoute.Get("/:secVideoID", c.SecVideoController.Get)
+	sectionVideoRoute.Post("", c.SecVideoController.Create)
+	sectionVideoRoute.Put("/:secVideoID", c.SecVideoController.Update)
+	sectionVideoRoute.Delete("/:secVideoID", c.SecVideoController.Delete)
+
 	courseSectionRoute.Get("", c.CourseSecController.List)
 	courseSectionRoute.Get("/:courseSecId", c.CourseSecController.Get)
 	courseSectionRoute.Post("", c.CourseSecController.Create)
