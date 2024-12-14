@@ -17,14 +17,18 @@ func (c *RouteConfig) SetupEmployeeRoute() {
 
 	courseRoute := employeeRoute.Group("/course", c.EmployeeAuthMiddleware)
 
+	courseSectionRoute := courseRoute.Group("/section", c.EmployeeAuthMiddleware)
+
+	courseSectionRoute.Get("", c.CourseSecController.List)
+	courseSectionRoute.Get("/:courseSecId", c.CourseSecController.Get)
+	courseSectionRoute.Post("", c.CourseSecController.Create)
+	courseSectionRoute.Put("/:courseSecId", c.CourseSecController.Update)
+	courseSectionRoute.Delete("/:courseSecId", c.CourseSecController.Delete)
+
 	courseRoute.Get("", c.CourseController.List)
 	courseRoute.Post("", c.CourseController.Create)
 	courseRoute.Get("/:courseID", c.CourseController.Get)
 	courseRoute.Put("/:courseID", c.CourseController.Update)
-
-	courseSectionRoute := courseRoute.Group("/section", c.EmployeeAuthMiddleware)
-
-	courseSectionRoute.Post("", c.CourseSecController.Create)
 
 	// transactionRoute := c.App.Group("/api/transaction", c.EmployeeMiddleware)
 	// transactionRoute.Post("/buy", c.TransactionController.Buy)

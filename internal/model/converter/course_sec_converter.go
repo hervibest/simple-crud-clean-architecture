@@ -11,6 +11,7 @@ func CourseSecToResponse(courseSec *entity.CourseSection) *model.CourseSectionRe
 		UUID:        courseSec.UUID,
 		Title:       courseSec.Title,
 		Description: courseSec.Description,
+		Sequence:    courseSec.Sequence,
 		CreatedAt:   courseSec.CreatedAt,
 		UpdatedAt:   courseSec.UpdatedAt,
 	}

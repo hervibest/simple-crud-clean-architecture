@@ -71,7 +71,7 @@ func (c *CourseCatController) List(ctx *fiber.Ctx) error {
 func (c *CourseCatController) Get(ctx *fiber.Ctx) error {
 	parsedUUID, err := uuid.Parse(ctx.Params("courseCatID"))
 	if err != nil {
-		c.Log.WithError(err).Error("error parsing uuid")
+		c.Log.WithError(err).Error("error parsing uuids")
 		return fiber.ErrBadRequest
 	}
 
@@ -102,7 +102,7 @@ func (c *CourseCatController) Update(ctx *fiber.Ctx) error {
 
 	parsedUUID, err := uuid.Parse(ctx.Params("courseCatID"))
 	if err != nil {
-		c.Log.WithError(err).Error("error parsing uuid")
+		c.Log.WithError(err).Error("error parsing uuid update category")
 		return fiber.ErrBadRequest
 	}
 
