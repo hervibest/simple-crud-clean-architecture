@@ -26,6 +26,7 @@ type BootstrapConfig struct {
 	TokenHelper     *helper.TokenHelper
 	EmailHelper     *helper.GomailSender
 	Midtrans        *helper.MidtransClient
+	MinioClient     *helper.Minio
 	CustomValidator helper.CustomValidator
 }
 
@@ -60,6 +61,9 @@ func Bootstrap(config *BootstrapConfig) {
 	courseVidControler := http.NewSecVideoController(courseVidUseCase, config.Log, config.CustomValidator)
 	transactionController := http.NewTransactionController(transactionUseCase, config.Log, config.Midtrans, config.CustomValidator)
 
+	// upload controller
+	uploadController := http.NewUploadController(config.Log, config.CustomValidator, *config.MinioClient)
+
 	// setup throttle
 	throttle := middleware.NewThrottle(1, 60)
 
@@ -74,11 +78,13 @@ func Bootstrap(config *BootstrapConfig) {
 		UserController:     userController,
 		EmployeeController: employeeController,
 
-		CourseCatController:     courseCatController,
-		CourseController:        courseController,
-		CourseSecController:     courseSecController,
-		TransactionController:   transactionController,
-		SecVideoController:      courseVidControler,
+		CourseCatController:   courseCatController,
+		CourseController:      courseController,
+		CourseSecController:   courseSecController,
+		TransactionController: transactionController,
+		SecVideoController:    courseVidControler,
+
+		UploadController:        uploadController,
 		Throttle:                throttle,
 		UserAuthMiddleware:      userAuthMiddleware,
 		BuyableCourseMiddleware: buyableCourseMiddleware,

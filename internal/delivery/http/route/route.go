@@ -17,6 +17,7 @@ type RouteConfig struct {
 	SecVideoController  *http.SectionVideoController
 
 	TransactionController *http.TransactionController
+	UploadController      *http.UploadController
 
 	Throttle                *middleware.Throttle
 	UserAuthMiddleware      fiber.Handler
