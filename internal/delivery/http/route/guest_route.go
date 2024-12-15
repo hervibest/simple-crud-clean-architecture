@@ -17,7 +17,9 @@ func (c *RouteConfig) SetupGuestRoute() {
 
 	c.App.Post("/api/webhook/notify", c.TransactionController.Notify)
 
-	c.App.Post("api/upload", c.UploadController.UploadFile)
-	c.App.Delete("api/upload/:fileName", c.UploadController.DeleteFile)
+	// c.App.Post("api/upload", c.UploadController.UploadFile)
+	// c.App.Delete("api/upload/:fileName", c.UploadController.DeleteFile)
+
+	// c.App.Post("/api/register", c.EmployeeController.Register)
 
 }

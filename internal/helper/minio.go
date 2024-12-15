@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"mime/multipart"
+	"simple-crud-clean-architecture/internal/model"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -33,7 +34,7 @@ func NewMinio(viper *viper.Viper, log *logrus.Logger) *Minio {
 	minioLocation := viper.GetString("minio.minio_location")
 	endpoint := minioHost + ":" + minioPort
 
-	minioClient, err = minio.New(endpoint, &minio.Options{ // Initialize minio client object.
+	minioClient, err = minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(minioRootUser, minioRootPassword, ""),
 		Secure: false,
 	})
@@ -43,7 +44,7 @@ func NewMinio(viper *viper.Viper, log *logrus.Logger) *Minio {
 
 	err = minioClient.MakeBucket(ctx, minioTicketsBucket, minio.MakeBucketOptions{Region: minioLocation})
 	if err != nil {
-		exists, errBucketExists := minioClient.BucketExists(ctx, minioTicketsBucket) // Check to see if we already own this bucket (which hminioens if you run this twice)
+		exists, errBucketExists := minioClient.BucketExists(ctx, minioTicketsBucket)
 		if errBucketExists == nil && exists {
 			log.Printf("We already own %s\n", minioTicketsBucket)
 		} else {
@@ -72,11 +73,11 @@ func (m *Minio) GetEnpoint() string {
 	return Endpoint
 }
 
-func (m *Minio) UploadFileToMinio(ctx context.Context, file *multipart.FileHeader, path string) (any, error) {
+func (m *Minio) UploadFileToMinio(ctx context.Context, file *multipart.FileHeader, path string) (*model.MinioFileResponse, error) {
 	uploadFile, err := file.Open()
 	if err != nil {
 		m.log.Warnf("parse file error" + err.Error())
-		return false, fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+		return nil, fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 	defer uploadFile.Close()
 
@@ -89,30 +90,30 @@ func (m *Minio) UploadFileToMinio(ctx context.Context, file *multipart.FileHeade
 	if err != nil {
 		m.log.Warnf("failed to upload file to S3" + err.Error())
 
-		return false, fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return nil, fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	resultMap := make(map[string]interface{})
-	resultMap["ChecksumCRC32"] = s3PutObjectOutput.ChecksumCRC32
-	resultMap["ChecksumCRC32C"] = s3PutObjectOutput.ChecksumCRC32C
-	resultMap["ChecksumSHA1"] = s3PutObjectOutput.ChecksumSHA1
-	resultMap["ChecksumSHA256"] = s3PutObjectOutput.ChecksumSHA256
-	resultMap["ETag"] = s3PutObjectOutput.ETag
-	resultMap["Expiration"] = s3PutObjectOutput.Expiration
+	fileResponse := new(model.MinioFileResponse)
+	fileResponse.ChecksumCRC32 = s3PutObjectOutput.ChecksumCRC32
+	fileResponse.ChecksumCRC32C = s3PutObjectOutput.ChecksumCRC32C
+	fileResponse.ChecksumSHA1 = s3PutObjectOutput.ChecksumSHA1
+	fileResponse.ChecksumSHA256 = s3PutObjectOutput.ChecksumSHA256
+	fileResponse.ETag = s3PutObjectOutput.ETag
+	fileResponse.Expiration = s3PutObjectOutput.Expiration
 
 	videoURL, err := m.MinioClient.PresignedGetObject(ctx, m.GetBucketName(), fileKey, 1*time.Hour, nil)
 	if err != nil {
 		m.log.Warnf("failed to generate presigned URL:" + err.Error())
 
-		return false, fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return nil, fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	resultMap["URL"] = videoURL.String()
-	resultMap["filename"] = fileKey
-	resultMap["mimetype"] = contentType
-	resultMap["size"] = file.Size
+	fileResponse.URL = videoURL.String()
+	fileResponse.Filename = fileKey
+	fileResponse.Mimetype = contentType
+	fileResponse.Size = file.Size
 
-	return resultMap, nil
+	return fileResponse, nil
 }
 
 func (m *Minio) DeleteFromMinio(ctx context.Context, fileName string) (bool, error) {

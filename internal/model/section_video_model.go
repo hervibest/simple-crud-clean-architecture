@@ -36,6 +36,11 @@ type UpdateSecVideoRequest struct {
 	Description string    `json:"description"`
 }
 
+type UploadVideoRequest struct {
+	SectionUUID uuid.UUID `json:"section_uuid" validate:"required"`
+	VideoUUID   uuid.UUID `validate:"required"`
+}
+
 type DeleteSecVideoRequest struct {
 	SectionUUID uuid.UUID `json:"section_uuid" validate:"required"`
 	VideoUUID   uuid.UUID `validate:"required"`
@@ -47,7 +52,7 @@ type SecVideoResponse struct {
 	Sequence     int       `json:"sequence,omitempty"`
 	OriginalName string    `json:"original_name,omitempty"`
 	OriginalSize float64   `json:"original_size,omitempty"`
-	OriginalMime string    `json:"original_mimeomitempty"`
+	OriginalMime string    `json:"original_mime,omitempty"`
 	MediaID      string    `json:"media_id,omitempty"`
 	Bucket       string    `json:"bucket,omitempty"`
 	Dir          string    `json:"dir,omitempty"`
