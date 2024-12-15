@@ -9,9 +9,9 @@ import (
 )
 
 type CreateTransactionRequest struct {
-	UserID        int
-	CourseUUIDStr string `json:"course_uuid,omitempty"`
-	CourseUUID    uuid.UUID
+	UserID        int       `validator:"required"`
+	CourseUUIDStr string    `json:"course_uuid,omitempty"`
+	CourseUUID    uuid.UUID `validator:"required"`
 }
 
 type MidtransSnapshotRequest struct {

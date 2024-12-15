@@ -65,11 +65,6 @@ func (c *SecVideoUseCase) Search(ctx context.Context, request *model.SearchSecVi
 
 func (c *SecVideoUseCase) Get(ctx context.Context, request *model.GetSecVideoRequest) (*model.SecVideoResponse, error) {
 
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, fiber.ErrBadRequest
-	}
-
 	sectionVideo := new(entity.SectionVideo)
 	if err := c.SectionVideoRepository.FindByUUID(c.DB, sectionVideo, request.UUID); err != nil {
 		c.Log.WithError(err).Error("error getting video")
@@ -82,11 +77,6 @@ func (c *SecVideoUseCase) Get(ctx context.Context, request *model.GetSecVideoReq
 func (c *SecVideoUseCase) Create(ctx context.Context, request *model.CreateSecVideoRequest) (*model.SecVideoResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, fiber.ErrBadRequest
-	}
 
 	helper.SanitiseStruct(request)
 
@@ -146,11 +136,6 @@ func (c *SecVideoUseCase) Create(ctx context.Context, request *model.CreateSecVi
 func (c *SecVideoUseCase) Update(ctx context.Context, request *model.UpdateSecVideoRequest) (*model.SecVideoResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, fiber.ErrBadRequest
-	}
 
 	helper.SanitiseStruct(request)
 
@@ -230,11 +215,6 @@ func (c *SecVideoUseCase) Delete(ctx context.Context, request *model.DeleteSecVi
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, fiber.ErrBadRequest
-	}
 
 	helper.SanitiseStruct(request)
 

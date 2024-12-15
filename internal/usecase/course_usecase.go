@@ -40,11 +40,6 @@ func (c *CourseUseCase) Create(ctx context.Context, request *model.CreateCourseR
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, fiber.ErrBadRequest
-	}
-
 	helper.SanitiseStruct(request)
 
 	total, err := c.CourseRepository.CountByName(tx, request.Name)
@@ -99,11 +94,6 @@ func (c *CourseUseCase) Create(ctx context.Context, request *model.CreateCourseR
 
 func (c *CourseUseCase) Search(ctx context.Context, request *model.SearchCourseRequest) ([]model.CourseResponse, *model.PageMetadata, error) {
 
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, nil, fiber.ErrBadRequest
-	}
-
 	courses, pageMetadata, err := c.CourseRepository.Search(c.DB, request, true)
 	if err != nil {
 		c.Log.WithError(err).Error("error getting course category")
@@ -119,11 +109,6 @@ func (c *CourseUseCase) Search(ctx context.Context, request *model.SearchCourseR
 }
 
 func (c *CourseUseCase) Get(ctx context.Context, request *model.GetCourseRequest) (*model.CourseResponse, error) {
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, fiber.ErrBadRequest
-	}
 
 	course, err := c.CourseRepository.FindWithDetails(c.DB, request.UUID, true)
 	if err != nil {
@@ -143,11 +128,6 @@ func (c *CourseUseCase) Update(ctx context.Context, request *model.UpdateCourseR
 	if err := c.CourseRepository.FindByUUID(tx, course, request.UUID); err != nil {
 		c.Log.WithError(err).Error("error getting contact")
 		return nil, fiber.ErrNotFound
-	}
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, fiber.ErrBadRequest
 	}
 
 	total, err := c.CourseRepository.CountByNameAndNotID(tx, request.Name, request.UUID)
@@ -228,10 +208,6 @@ func (c *CourseUseCase) GetPurchasedCourseUUID(ctx context.Context, request *mod
 }
 
 func (c *CourseUseCase) UserGetPurchasedCourse(ctx context.Context, request *model.SearchCourseRequest, userID int) ([]model.CourseResponse, *model.PageMetadata, error) {
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, nil, fiber.ErrBadRequest
-	}
 
 	courses, pageMetadata, err := c.CourseRepository.UserGetPurchasedCourse(c.DB, request, userID)
 	if err != nil {

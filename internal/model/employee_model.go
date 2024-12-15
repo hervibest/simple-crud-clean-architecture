@@ -30,8 +30,8 @@ type VerifyEmployeeRequest struct {
 }
 
 type LogoutEmployeeRequest struct {
-	Email       string
-	AccessToken string
+	Email       string `validate:"required,email,max=100"`
+	AccessToken string `validate:"required"`
 }
 
 type GetEmployeeRequest struct {

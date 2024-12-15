@@ -17,8 +17,8 @@ type UserResponse struct {
 }
 
 type RegisterUserRequest struct {
-	Email    string `json:"email" validate:"required,email,max=100"`
-	Password string `json:"password" validate:"required,max=100"`
+	Email    string `json:"email" validate:"required,email,min=5,max=100"`
+	Password string `json:"password" validate:"required,min=6,max=100"`
 }
 
 type VerifyEmailUserRequest struct {

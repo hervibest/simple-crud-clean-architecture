@@ -66,7 +66,7 @@ func (c *TokenHelper) GenerateEmployeeAccessToken(employeeUUID uuid.UUID) (*enti
 	claims["employee_uuid"] = employeeUUID
 	claims["exp"] = expirationTime.Unix()
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	stringToken, err := token.SignedString(c.secret.accessSecretByte)
 	if err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func (c *TokenHelper) GenerateAccessToken(userUUID uuid.UUID) (*entity.AccessTok
 	claims["user_uuid"] = userUUID
 	claims["exp"] = expirationTime.Unix()
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	stringToken, err := token.SignedString(c.secret.accessSecretByte)
 	if err != nil {
 		return nil, err

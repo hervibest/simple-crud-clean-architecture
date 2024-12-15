@@ -46,11 +46,11 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	err := c.Validate.Struct(request)
-	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
-	}
+	// err := c.Validate.Struct(request)
+	// if err != nil {
+	// 	c.Log.Warnf("Invalid request body : %+v", err)
+	// 	return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
+	// }
 
 	helper.SanitiseStruct(request)
 
@@ -147,11 +147,6 @@ func (c *UserUseCase) RequestEmailVerification(ctx context.Context, email string
 func (c *UserUseCase) VerifyEmail(ctx context.Context, request *model.VerifyEmailUserRequest) error {
 	tx := c.DB.WithContext(ctx).Begin()
 
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("failed to validate request body")
-		return fiber.NewError(fiber.StatusBadRequest, "failed to validate request body")
-	}
-
 	helper.SanitiseStruct(request)
 
 	decryptedToken, err := c.TokenHelper.Decrypt(request.Token)
@@ -228,11 +223,6 @@ func (c *UserUseCase) RequestResetPassword(ctx context.Context, email string, ne
 func (c *UserUseCase) ValidateResetToken(ctx context.Context, request *model.ValidateResetTokenRequest) (bool, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("failed to validate request body")
-		return false, fiber.ErrBadRequest
-	}
-
 	decryptedToken, err := c.TokenHelper.Decrypt(request.Token)
 	if err != nil {
 		c.Log.Warnf("Failed to register user : %+v", err)
@@ -256,11 +246,6 @@ func (c *UserUseCase) ValidateResetToken(ctx context.Context, request *model.Val
 
 func (c *UserUseCase) ResetPassword(ctx context.Context, request *model.ResetPasswordUserRequest) error {
 	tx := c.DB.WithContext(ctx).Begin()
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("failed to validate request body")
-		return fiber.ErrBadRequest
-	}
 
 	decryptedToken, err := c.TokenHelper.Decrypt(request.Token)
 	if err != nil {
@@ -306,11 +291,6 @@ func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequest
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body  : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
-	}
 
 	user := new(entity.User)
 	if err := c.UserRepository.FindByEmail(tx, user, request.Email); err != nil {
@@ -361,11 +341,6 @@ func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequest
 
 func (c *UserUseCase) Current(ctx context.Context, request *model.GetUserRequest) (*model.UserResponse, error) {
 
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
-	}
-
 	user := new(entity.User)
 	if err := c.UserRepository.FindByEmail(c.DB, user, request.Email); err != nil {
 		c.Log.Warnf("Failed find user by email : %+v", err)
@@ -412,11 +387,6 @@ func (c *UserUseCase) Logout(ctx context.Context, request *model.LogoutUserReque
 
 	defer tx.Rollback()
 
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return false, fiber.ErrBadRequest
-	}
-
 	user := new(entity.User)
 	if err := c.UserRepository.FindByEmail(tx, user, request.Email); err != nil {
 		c.Log.Warnf("Failed find user by email : %+v", err)
@@ -446,12 +416,6 @@ func (c *UserUseCase) Logout(ctx context.Context, request *model.LogoutUserReque
 func (c *UserUseCase) AccessTokenRequest(ctx context.Context, request *model.AccessTokenRequest) (*model.UserResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
-
-	err := c.Validate.Struct(request)
-	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
-	}
 
 	refreshTokenDetails, err := c.TokenHelper.VerifyRefreshToken(request.Token)
 	if err != nil {
@@ -504,11 +468,6 @@ func (c *UserUseCase) AccessTokenRequest(ctx context.Context, request *model.Acc
 func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserRequest) (*model.UserResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
-	}
 
 	user := new(entity.User)
 	if err := c.UserRepository.FindByEmail(tx, user, request.Email); err != nil {

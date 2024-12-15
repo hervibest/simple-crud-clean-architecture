@@ -35,11 +35,6 @@ func NewCourseSecUseCase(db *gorm.DB, logger *logrus.Logger, validate *validator
 
 func (c *CourseSecUseCase) Search(ctx context.Context, request *model.SearchCourseSecRequest) ([]model.CourseSectionResponse, *model.PageMetadata, error) {
 
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, nil, fiber.ErrBadRequest
-	}
-
 	course := new(entity.Course)
 	if err := c.CourseRepository.FindByUUID(c.DB, course, request.CourseUUID); err != nil {
 		c.Log.Warnf("Failed find course from database : %+v", err)
@@ -63,12 +58,6 @@ func (c *CourseSecUseCase) Search(ctx context.Context, request *model.SearchCour
 }
 
 func (c *CourseSecUseCase) Get(ctx context.Context, request *model.GetCourseSecRequest) (*model.CourseSectionResponse, error) {
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, fiber.ErrBadRequest
-	}
-
 	courseSection := new(entity.CourseSection)
 	if err := c.CourseSectionRepository.FindByUUID(c.DB, courseSection, request.UUID); err != nil {
 		c.Log.WithError(err).Error("error getting course")
@@ -79,13 +68,9 @@ func (c *CourseSecUseCase) Get(ctx context.Context, request *model.GetCourseSecR
 }
 
 func (c *CourseSecUseCase) Create(ctx context.Context, request *model.CreateCourseSecRequest) (*model.CourseSectionResponse, error) {
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, fiber.ErrBadRequest
-	}
 
 	helper.SanitiseStruct(request)
 
@@ -143,13 +128,9 @@ func (c *CourseSecUseCase) Create(ctx context.Context, request *model.CreateCour
 }
 
 func (c *CourseSecUseCase) Update(ctx context.Context, request *model.UpdateCourseSecRequest) (*model.CourseSectionResponse, error) {
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, fiber.ErrBadRequest
-	}
 
 	helper.SanitiseStruct(request)
 
@@ -194,6 +175,8 @@ func (c *CourseSecUseCase) Update(ctx context.Context, request *model.UpdateCour
 
 	sequenceOld := courseSection.Sequence
 
+	//implement stack logic
+
 	if sequenceIsUsed && request.Sequence != courseSection.Sequence {
 		var moreThanOld bool
 		if sequenceOld < request.Sequence {
@@ -229,11 +212,6 @@ func (c *CourseSecUseCase) Delete(ctx context.Context, request *model.DeleteCour
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, fiber.ErrBadRequest
-	}
 
 	helper.SanitiseStruct(request)
 

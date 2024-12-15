@@ -16,16 +16,18 @@ import (
 )
 
 type TransactionController struct {
-	Log      *logrus.Logger
-	UseCase  *usecase.TransactionUseCase
-	Midtrans *helper.MidtransClient
+	Log       *logrus.Logger
+	UseCase   *usecase.TransactionUseCase
+	Midtrans  *helper.MidtransClient
+	Validator helper.CustomValidator
 }
 
-func NewTransactionController(useCase *usecase.TransactionUseCase, log *logrus.Logger, midtransHelper *helper.MidtransClient) *TransactionController {
+func NewTransactionController(useCase *usecase.TransactionUseCase, log *logrus.Logger, midtransHelper *helper.MidtransClient, validator helper.CustomValidator) *TransactionController {
 	return &TransactionController{
-		UseCase:  useCase,
-		Log:      log,
-		Midtrans: midtransHelper,
+		UseCase:   useCase,
+		Log:       log,
+		Midtrans:  midtransHelper,
+		Validator: validator,
 	}
 }
 
@@ -66,6 +68,14 @@ func (c *TransactionController) Buy(ctx *fiber.Ctx) error {
 	request.CourseUUID = parsedUUID
 	request.UserID = auth.Id
 
+	if validationErr := c.Validator.Validate(request); validationErr != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr,
+			Message: "validation error",
+		})
+	}
+
 	transaction, err := c.UseCase.CreateTransaction(ctx.UserContext(), request)
 	if err != nil {
 		c.Log.WithError(err).Error("error creating transaction")
@@ -91,6 +101,8 @@ func (c *TransactionController) Notify(ctx *fiber.Ctx) error {
 		c.Log.WithError(err).Error("error parsing request body")
 		return fiber.ErrBadRequest
 	}
+
+	helper.SanitiseStruct(request)
 
 	parsedOrderID, err := uuid.Parse(request.OrderID)
 

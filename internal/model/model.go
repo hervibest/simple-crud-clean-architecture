@@ -1,11 +1,16 @@
 package model
 
-// WebResponse is a generic struct for responses with flexible data structure
 type WebResponse struct {
 	Success bool                   `json:"success"`
-	Data    map[string]interface{} `json:"data,omitempty"` // Flexible Data field
+	Data    map[string]interface{} `json:"data,omitempty"`
 	Paging  *PageMetadata          `json:"paging,omitempty"`
 	Errors  string                 `json:"errors,omitempty"`
+}
+
+type ValidationErrorResponse struct {
+	Success bool        `json:"success"`
+	Message string      `json:"message,omitempty"`
+	Errors  interface{} `json:"errors,omitempty"`
 }
 
 type DataResponse[T any] struct {

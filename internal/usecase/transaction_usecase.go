@@ -54,11 +54,6 @@ func (c *TransactionUseCase) CreateTransaction(ctx context.Context, request *mod
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, fiber.ErrBadRequest
-	}
-
 	helper.SanitiseStruct(request)
 	course := new(entity.Course)
 	if err := c.CourseRepository.FindByUUID(tx, course, request.CourseUUID); err != nil {

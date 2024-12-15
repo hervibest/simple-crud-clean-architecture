@@ -11,14 +11,16 @@ import (
 )
 
 type CourseSectionController struct {
-	UseCase *usecase.CourseSecUseCase
-	Log     *logrus.Logger
+	UseCase   *usecase.CourseSecUseCase
+	Log       *logrus.Logger
+	Validator helper.CustomValidator
 }
 
-func NewCourseSecController(useCase *usecase.CourseSecUseCase, log *logrus.Logger) *CourseSectionController {
+func NewCourseSecController(useCase *usecase.CourseSecUseCase, log *logrus.Logger, validator helper.CustomValidator) *CourseSectionController {
 	return &CourseSectionController{
-		UseCase: useCase,
-		Log:     log,
+		UseCase:   useCase,
+		Log:       log,
+		Validator: validator,
 	}
 }
 
@@ -28,6 +30,14 @@ func (c *CourseSectionController) Create(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.WithError(err).Error("error parsing request body")
 		return fiber.ErrBadRequest
+	}
+
+	if validationErr := c.Validator.Validate(request); validationErr != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr,
+			Message: "validation error",
+		})
 	}
 
 	response, err := c.UseCase.Create(ctx.UserContext(), request)
@@ -56,6 +66,14 @@ func (c *CourseSectionController) List(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	if validationErr := c.Validator.Validate(request); validationErr != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr,
+			Message: "validation error",
+		})
+	}
+
 	responses, pageMetadata, err := c.UseCase.Search(ctx.UserContext(), request)
 	if err != nil {
 		c.Log.WithError(err).Error("error searching course sections")
@@ -75,12 +93,20 @@ func (c *CourseSectionController) List(ctx *fiber.Ctx) error {
 func (c *CourseSectionController) Get(ctx *fiber.Ctx) error {
 	parsedUUID, err := uuid.Parse(ctx.Params("courseSecID"))
 	if err != nil {
-		c.Log.WithError(err).Error("error parsing uuid course controller")
+		c.Log.WithError(err).Error("error parsing section video uuid")
 		return fiber.ErrBadRequest
 	}
 
 	request := &model.GetCourseSecRequest{
 		UUID: parsedUUID,
+	}
+
+	if validationErr := c.Validator.Validate(request); validationErr != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr,
+			Message: "validation error",
+		})
 	}
 
 	response, err := c.UseCase.Get(ctx.UserContext(), request)
@@ -105,11 +131,19 @@ func (c *CourseSectionController) Update(ctx *fiber.Ctx) error {
 
 	parsedUUID, err := uuid.Parse(ctx.Params("courseSecID"))
 	if err != nil {
-		c.Log.WithError(err).Error("error parsing uuid")
+		c.Log.WithError(err).Error("error parsing course section uuid")
 		return fiber.ErrBadRequest
 	}
 
 	request.CourseSecUUID = parsedUUID
+
+	if validationErr := c.Validator.Validate(request); validationErr != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr,
+			Message: "validation error",
+		})
+	}
 
 	response, err := c.UseCase.Update(ctx.UserContext(), request)
 	if err != nil {
@@ -133,11 +167,19 @@ func (c *CourseSectionController) Delete(ctx *fiber.Ctx) error {
 
 	parsedUUID, err := uuid.Parse(ctx.Params("courseSecID"))
 	if err != nil {
-		c.Log.WithError(err).Error("error parsing uuid")
+		c.Log.WithError(err).Error("error parsing section video uuid")
 		return fiber.ErrBadRequest
 	}
 
 	request.CourseSecUUID = parsedUUID
+
+	if validationErr := c.Validator.Validate(request); validationErr != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr,
+			Message: "validation error",
+		})
+	}
 
 	response, err := c.UseCase.Delete(ctx.UserContext(), request)
 	if err != nil {

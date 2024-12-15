@@ -2,6 +2,7 @@ package http
 
 import (
 	"simple-crud-clean-architecture/internal/delivery/http/middleware"
+	"simple-crud-clean-architecture/internal/helper"
 	"simple-crud-clean-architecture/internal/model"
 	"simple-crud-clean-architecture/internal/usecase"
 
@@ -10,14 +11,16 @@ import (
 )
 
 type EmployeeController struct {
-	Log     *logrus.Logger
-	UseCase *usecase.EmployeeUseCase
+	Log       *logrus.Logger
+	UseCase   *usecase.EmployeeUseCase
+	Validator helper.CustomValidator
 }
 
-func NewEmployeeController(useCase *usecase.EmployeeUseCase, logger *logrus.Logger) *EmployeeController {
+func NewEmployeeController(useCase *usecase.EmployeeUseCase, logger *logrus.Logger, validator helper.CustomValidator) *EmployeeController {
 	return &EmployeeController{
-		Log:     logger,
-		UseCase: useCase,
+		Log:       logger,
+		UseCase:   useCase,
+		Validator: validator,
 	}
 }
 
@@ -27,6 +30,14 @@ func (c *EmployeeController) Register(ctx *fiber.Ctx) error {
 	if err != nil {
 		c.Log.Warnf("Failed to parse request body : %+v", err)
 		return fiber.ErrBadRequest
+	}
+
+	if validationErr := c.Validator.Validate(request); validationErr != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr,
+			Message: "validation error",
+		})
 	}
 
 	response, err := c.UseCase.Create(ctx.UserContext(), request)
@@ -53,6 +64,14 @@ func (c *EmployeeController) Login(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
+	if validationErr := c.Validator.Validate(request); validationErr != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr,
+			Message: "validation error",
+		})
+	}
+
 	response, err := c.UseCase.Login(ctx.UserContext(), request)
 	if err != nil {
 		c.Log.Warnf("Failed to login employee : %+v", err)
@@ -74,6 +93,14 @@ func (c *EmployeeController) Current(ctx *fiber.Ctx) error {
 
 	request := &model.GetEmployeeRequest{
 		Email: auth.Email,
+	}
+
+	if validationErr := c.Validator.Validate(request); validationErr != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr,
+			Message: "validation error",
+		})
 	}
 
 	response, err := c.UseCase.Current(ctx.UserContext(), request)
@@ -104,6 +131,15 @@ func (c *EmployeeController) Logout(ctx *fiber.Ctx) error {
 
 	request.Email = auth.Email
 	request.AccessToken = auth.Token
+
+	if validationErr := c.Validator.Validate(request); validationErr != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr,
+			Message: "validation error",
+		})
+	}
+
 	response, err := c.UseCase.Logout(ctx.UserContext(), request)
 	if err != nil {
 		c.Log.WithError(err).Warnf("Failed to logout employee")

@@ -17,15 +17,16 @@ import (
 )
 
 type BootstrapConfig struct {
-	DB          *gorm.DB
-	App         *fiber.App
-	Log         *logrus.Logger
-	Validate    *validator.Validate
-	Config      *viper.Viper
-	Redis       *redis.Client
-	TokenHelper *helper.TokenHelper
-	EmailHelper *helper.GomailSender
-	Midtrans    *helper.MidtransClient
+	DB              *gorm.DB
+	App             *fiber.App
+	Log             *logrus.Logger
+	Validate        *validator.Validate
+	Config          *viper.Viper
+	Redis           *redis.Client
+	TokenHelper     *helper.TokenHelper
+	EmailHelper     *helper.GomailSender
+	Midtrans        *helper.MidtransClient
+	CustomValidator helper.CustomValidator
 }
 
 func Bootstrap(config *BootstrapConfig) {
@@ -50,14 +51,14 @@ func Bootstrap(config *BootstrapConfig) {
 	transactionUseCase := usecase.NewTransactionUseCase(config.DB, config.Log, config.Validate, transactionRepository, courseRepository, userRepository, config.Midtrans)
 
 	// setup controller
-	userController := http.NewUserController(userUseCase, config.Log)
-	employeeController := http.NewEmployeeController(employeeUseCase, config.Log)
+	userController := http.NewUserController(userUseCase, config.Log, config.CustomValidator)
+	employeeController := http.NewEmployeeController(employeeUseCase, config.Log, config.CustomValidator)
 
-	courseCatController := http.NewCourseCatController(courseCatUseCase, config.Log)
-	courseController := http.NewCourseController(courseUseCase, config.Log)
-	courseSecController := http.NewCourseSecController(courseSecUseCase, config.Log)
-	courseVidControler := http.NewSecVideoController(courseVidUseCase, config.Log)
-	transactionController := http.NewTransactionController(transactionUseCase, config.Log, config.Midtrans)
+	courseCatController := http.NewCourseCatController(courseCatUseCase, config.Log, config.CustomValidator)
+	courseController := http.NewCourseController(courseUseCase, config.Log, config.CustomValidator)
+	courseSecController := http.NewCourseSecController(courseSecUseCase, config.Log, config.CustomValidator)
+	courseVidControler := http.NewSecVideoController(courseVidUseCase, config.Log, config.CustomValidator)
+	transactionController := http.NewTransactionController(transactionUseCase, config.Log, config.Midtrans, config.CustomValidator)
 
 	// setup throttle
 	throttle := middleware.NewThrottle(1, 60)

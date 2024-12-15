@@ -16,17 +16,19 @@ func main() {
 	tokenHelper := helper.NewTokenHelper(viperConfig, log)
 	emailHelper := helper.NewGomailSender(viperConfig, log)
 	midtrans := helper.NewMidtransClient(viperConfig, log)
+	customValidator := helper.NewCustomValidator(viperConfig)
 
 	config.Bootstrap(&config.BootstrapConfig{
-		DB:          db,
-		App:         app,
-		Log:         log,
-		Validate:    validate,
-		Config:      viperConfig,
-		Redis:       redis,
-		TokenHelper: tokenHelper,
-		EmailHelper: emailHelper,
-		Midtrans:    midtrans,
+		DB:              db,
+		App:             app,
+		Log:             log,
+		Validate:        validate,
+		Config:          viperConfig,
+		Redis:           redis,
+		TokenHelper:     tokenHelper,
+		EmailHelper:     emailHelper,
+		Midtrans:        midtrans,
+		CustomValidator: customValidator,
 	})
 
 	webPort := viperConfig.GetInt("web.port")

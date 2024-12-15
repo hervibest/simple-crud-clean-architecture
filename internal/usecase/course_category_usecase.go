@@ -38,11 +38,6 @@ func (c *CourseCatUseCase) Create(ctx context.Context, request *model.CreateCour
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, fiber.ErrBadRequest
-	}
-
 	helper.SanitiseStruct(request)
 
 	total, err := c.CourseCatRepository.CountByName(tx, request.Name)
@@ -78,11 +73,6 @@ func (c *CourseCatUseCase) Create(ctx context.Context, request *model.CreateCour
 
 func (c *CourseCatUseCase) Search(ctx context.Context, request *model.SearchCourseCatRequest) ([]model.CourseCatResponse, *model.PageMetadata, error) {
 
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, nil, fiber.ErrBadRequest
-	}
-
 	courseCats, pageMetadata, err := c.CourseCatRepository.Search(c.DB, request)
 	if err != nil {
 		c.Log.WithError(err).Error("error getting course category")
@@ -98,11 +88,6 @@ func (c *CourseCatUseCase) Search(ctx context.Context, request *model.SearchCour
 }
 
 func (c *CourseCatUseCase) Get(ctx context.Context, request *model.GetCourseCatRequest) (*model.CourseCatResponse, error) {
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, fiber.ErrBadRequest
-	}
 
 	courseCategory := new(entity.CourseCategory)
 	if err := c.CourseCatRepository.FindByUUID(c.DB, courseCategory, request.UUID); err != nil {
@@ -122,11 +107,6 @@ func (c *CourseCatUseCase) Update(ctx context.Context, request *model.UpdateCour
 	if err := c.CourseCatRepository.FindByUUID(tx, courseCategory, request.UUID); err != nil {
 		c.Log.WithError(err).Error("error getting contact")
 		return nil, fiber.ErrNotFound
-	}
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, fiber.ErrBadRequest
 	}
 
 	total, err := c.CourseCatRepository.CountByNameAndNotID(tx, request.Name, request.UUID)

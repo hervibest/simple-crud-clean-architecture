@@ -11,14 +11,16 @@ import (
 )
 
 type SectionVideoController struct {
-	UseCase *usecase.SecVideoUseCase
-	Log     *logrus.Logger
+	UseCase   *usecase.SecVideoUseCase
+	Log       *logrus.Logger
+	Validator helper.CustomValidator
 }
 
-func NewSecVideoController(useCase *usecase.SecVideoUseCase, log *logrus.Logger) *SectionVideoController {
+func NewSecVideoController(useCase *usecase.SecVideoUseCase, log *logrus.Logger, validator helper.CustomValidator) *SectionVideoController {
 	return &SectionVideoController{
-		UseCase: useCase,
-		Log:     log,
+		UseCase:   useCase,
+		Log:       log,
+		Validator: validator,
 	}
 }
 
@@ -30,9 +32,17 @@ func (c *SectionVideoController) Create(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	if validationErr := c.Validator.Validate(request); validationErr != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr,
+			Message: "validation error",
+		})
+	}
+
 	response, err := c.UseCase.Create(ctx.UserContext(), request)
 	if err != nil {
-		c.Log.WithError(err).Error("error creating course category")
+		c.Log.WithError(err).Error("error creating section video")
 		return err
 	}
 
@@ -56,9 +66,17 @@ func (c *SectionVideoController) List(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	if validationErr := c.Validator.Validate(request); validationErr != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr,
+			Message: "validation error",
+		})
+	}
+
 	responses, pageMetadata, err := c.UseCase.Search(ctx.UserContext(), request)
 	if err != nil {
-		c.Log.WithError(err).Error("error searching course sections")
+		c.Log.WithError(err).Error("error searching section videos")
 		return err
 	}
 
@@ -78,7 +96,7 @@ func (c *SectionVideoController) Get(ctx *fiber.Ctx) error {
 	c.Log.Infof(parsedUUID.String())
 
 	if err != nil {
-		c.Log.WithError(err).Error("error parsing uuid course controller")
+		c.Log.WithError(err).Error("error parsing section video controller")
 		return fiber.ErrBadRequest
 	}
 
@@ -86,9 +104,17 @@ func (c *SectionVideoController) Get(ctx *fiber.Ctx) error {
 		UUID: parsedUUID,
 	}
 
+	if validationErr := c.Validator.Validate(request); validationErr != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr,
+			Message: "validation error",
+		})
+	}
+
 	response, err := c.UseCase.Get(ctx.UserContext(), request)
 	if err != nil {
-		c.Log.WithError(err).Error("error getting contact")
+		c.Log.WithError(err).Error("error getting section video")
 		return err
 	}
 
@@ -108,15 +134,23 @@ func (c *SectionVideoController) Update(ctx *fiber.Ctx) error {
 
 	parsedUUID, err := uuid.Parse(ctx.Params("secVideoID"))
 	if err != nil {
-		c.Log.WithError(err).Error("error parsing uuid")
+		c.Log.WithError(err).Error("error parsing section video uuid")
 		return fiber.ErrBadRequest
 	}
 
 	request.VideoUUID = parsedUUID
 
+	if validationErr := c.Validator.Validate(request); validationErr != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr,
+			Message: "validation error",
+		})
+	}
+
 	response, err := c.UseCase.Update(ctx.UserContext(), request)
 	if err != nil {
-		c.Log.WithError(err).Error("error updating course category")
+		c.Log.WithError(err).Error("error updating section video")
 		return err
 	}
 
@@ -136,15 +170,23 @@ func (c *SectionVideoController) Delete(ctx *fiber.Ctx) error {
 
 	parsedUUID, err := uuid.Parse(ctx.Params("secVideoID"))
 	if err != nil {
-		c.Log.WithError(err).Error("error parsing uuid")
+		c.Log.WithError(err).Error("error parsing section video uuid")
 		return fiber.ErrBadRequest
 	}
 
 	request.VideoUUID = parsedUUID
 
+	if validationErr := c.Validator.Validate(request); validationErr != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr,
+			Message: "validation error",
+		})
+	}
+
 	response, err := c.UseCase.Delete(ctx.UserContext(), request)
 	if err != nil {
-		c.Log.WithError(err).Error("error deleting course category")
+		c.Log.WithError(err).Error("error deleting secttion video")
 		return err
 	}
 

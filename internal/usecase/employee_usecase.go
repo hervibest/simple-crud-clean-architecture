@@ -46,12 +46,6 @@ func (c *EmployeeUseCase) Create(ctx context.Context, request *model.RegisterEmp
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	err := c.Validate.Struct(request)
-	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
-	}
-
 	helper.SanitiseStruct(request)
 
 	total, err := c.EmployeeRepository.CountByEmail(tx, request.Email)
@@ -94,11 +88,6 @@ func (c *EmployeeUseCase) Login(ctx context.Context, request *model.LoginEmploye
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body  : %+v", err)
-		return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
-	}
 
 	employee := new(entity.Employee)
 	if err := c.EmployeeRepository.FindByEmail(tx, employee, request.Email); err != nil {
@@ -159,11 +148,6 @@ func (c *EmployeeUseCase) Verify(ctx context.Context, request *model.VerifyEmplo
 
 func (c *EmployeeUseCase) Current(ctx context.Context, request *model.GetEmployeeRequest) (*model.EmployeeResponse, error) {
 
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
-	}
-
 	employee := new(entity.Employee)
 	if err := c.EmployeeRepository.FindByEmail(c.DB, employee, request.Email); err != nil {
 		c.Log.Warnf("Failed find employee by email : %+v", err)
@@ -177,11 +161,6 @@ func (c *EmployeeUseCase) Logout(ctx context.Context, request *model.LogoutEmplo
 	tx := c.DB.WithContext(ctx).Begin()
 
 	defer tx.Rollback()
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return false, fiber.ErrBadRequest
-	}
 
 	employee := new(entity.Employee)
 	if err := c.EmployeeRepository.FindByEmail(tx, employee, request.Email); err != nil {

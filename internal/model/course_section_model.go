@@ -22,7 +22,7 @@ type GetCourseSecRequest struct {
 type CreateCourseSecRequest struct {
 	CourseUUID  uuid.UUID `json:"course_uuid" validate:"required"`
 	Title       string    `json:"title" validate:"required,max=255"`
-	Sequence    int       `json:"sequence" validate:"required"`
+	Sequence    int       `json:"sequence"`
 	Description string    `json:"description"`
 }
 
