@@ -27,3 +27,14 @@ func CourseUUIDToResponse(course *entity.Course) *model.CourseUUIDresponse {
 		UUID: course.UUID,
 	}
 }
+
+func DTOCourseToResponse(courseCat entity.Course) model.CourseResponse {
+	return model.CourseResponse{
+		UUID:        courseCat.UUID,
+		Name:        courseCat.Name,
+		Slug:        courseCat.Slug,
+		Description: courseCat.Description,
+		CreatedAt:   courseCat.CreatedAt,
+		UpdatedAt:   courseCat.UpdatedAt,
+	}
+}

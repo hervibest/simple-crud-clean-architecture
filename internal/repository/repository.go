@@ -44,3 +44,13 @@ func (r *Repository[T]) CountByName(db *gorm.DB, email string) (int64, error) {
 	err := db.Model(new(T)).Where("name = ?", email).Count(&total).Error
 	return total, err
 }
+
+func (r *Repository[T]) FindManyByUUIDs(db *gorm.DB, uuids []uuid.UUID) ([]*T, error) {
+	var model []*T
+
+	if err := db.Where("uuid IN ?", uuids).Find(&model).Error; err != nil {
+		return nil, err
+	}
+
+	return model, nil
+}

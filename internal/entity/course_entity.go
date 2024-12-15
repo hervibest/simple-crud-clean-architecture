@@ -17,6 +17,7 @@ type Course struct {
 	CreatedAt      time.Time        `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt      time.Time        `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 	Categories     []CourseCategory `gorm:"many2many:course_category_course;foreignKey:id;joinForeignKey:course_id;references:id;joinReferences:course_category_id"`
+	Discounts      []Discount       `gorm:"many2many:course_discount;foreignKey:id;joinForeignKey:course_id;references:id;joinReferences:discount_id"`
 	Transaction    []Transaction    `gorm:"foreignKey:course_id;references:id"`
 	CourseSections []CourseSection  `gorm:"foreignKey:course_id;references:id"`
 	User           []User           `gorm:"many2many:course_user;foreignKey:id;joinForeignKey:course_id;references:id;joinReferences:user_id"`

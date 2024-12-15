@@ -16,6 +16,7 @@ type RouteConfig struct {
 	CourseSecController *http.CourseSectionController
 	SecVideoController  *http.SectionVideoController
 
+	DiscountController    *http.DiscountController
 	TransactionController *http.TransactionController
 
 	Throttle                *middleware.Throttle

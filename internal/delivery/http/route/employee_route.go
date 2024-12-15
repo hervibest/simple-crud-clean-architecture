@@ -38,6 +38,12 @@ func (c *RouteConfig) SetupEmployeeRoute() {
 	courseRoute.Get("/:courseID", c.CourseController.Get)
 	courseRoute.Put("/:courseID", c.CourseController.Update)
 
+	discountRoute := employeeRoute.Group("/discount", c.EmployeeAuthMiddleware)
+
+	discountRoute.Get("", c.DiscountController.List)
+	discountRoute.Post("/create", c.DiscountController.Create)
+	discountRoute.Get("/detail/:discountID", c.DiscountController.Get)
+	discountRoute.Put("/update/:discountID", c.DiscountController.Update)
 	// transactionRoute := c.App.Group("/api/transaction", c.EmployeeMiddleware)
 	// transactionRoute.Post("/buy", c.TransactionController.Buy)
 	// transactionRoute.Get("/:trxId", c.TransactionController.GetTransaction)

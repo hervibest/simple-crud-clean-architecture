@@ -39,6 +39,8 @@ func Bootstrap(config *BootstrapConfig) {
 	courseRepository := repository.NewCourseRepository(config.Log)
 	courseSecRepository := repository.NewCourseSectionRepository(config.Log)
 	courseVidRepository := repository.NewSecVideoRepository(config.Log)
+
+	discountRepository := repository.NewDiscountRepository(config.Log)
 	transactionRepository := repository.NewTransactionRepository(config.Log)
 
 	// setup use cases
@@ -48,6 +50,8 @@ func Bootstrap(config *BootstrapConfig) {
 	courseUseCase := usecase.NewCourseUseCase(config.DB, config.Log, config.Validate, courseRepository, courseCatRepository)
 	courseSecUseCase := usecase.NewCourseSecUseCase(config.DB, config.Log, config.Validate, courseSecRepository, courseRepository)
 	courseVidUseCase := usecase.NewSecVideoUseCase(config.DB, config.Log, config.Validate, courseSecRepository, courseVidRepository)
+
+	discountUseCase := usecase.NewDiscountUseCase(config.DB, config.Log, discountRepository, courseRepository)
 	transactionUseCase := usecase.NewTransactionUseCase(config.DB, config.Log, config.Validate, transactionRepository, courseRepository, userRepository, config.Midtrans)
 
 	// setup controller
@@ -58,6 +62,8 @@ func Bootstrap(config *BootstrapConfig) {
 	courseController := http.NewCourseController(courseUseCase, config.Log, config.CustomValidator)
 	courseSecController := http.NewCourseSecController(courseSecUseCase, config.Log, config.CustomValidator)
 	courseVidControler := http.NewSecVideoController(courseVidUseCase, config.Log, config.CustomValidator)
+
+	discountController := http.NewDiscountController(discountUseCase, config.Log, config.CustomValidator)
 	transactionController := http.NewTransactionController(transactionUseCase, config.Log, config.Midtrans, config.CustomValidator)
 
 	// setup throttle
@@ -74,11 +80,14 @@ func Bootstrap(config *BootstrapConfig) {
 		UserController:     userController,
 		EmployeeController: employeeController,
 
-		CourseCatController:     courseCatController,
-		CourseController:        courseController,
-		CourseSecController:     courseSecController,
-		TransactionController:   transactionController,
-		SecVideoController:      courseVidControler,
+		CourseCatController: courseCatController,
+		CourseController:    courseController,
+		CourseSecController: courseSecController,
+		SecVideoController:  courseVidControler,
+
+		DiscountController:    discountController,
+		TransactionController: transactionController,
+
 		Throttle:                throttle,
 		UserAuthMiddleware:      userAuthMiddleware,
 		BuyableCourseMiddleware: buyableCourseMiddleware,

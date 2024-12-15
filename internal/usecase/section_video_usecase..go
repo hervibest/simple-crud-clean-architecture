@@ -141,13 +141,13 @@ func (c *SecVideoUseCase) Update(ctx context.Context, request *model.UpdateSecVi
 
 	section := new(entity.CourseSection)
 	if err := c.CourseSectionRepository.FindByUUID(tx, section, request.SectionUUID); err != nil {
-		c.Log.Warnf("Failed find course from database : %+v", err)
+		c.Log.Warnf("Failed find section from database : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
 	sectionVideo := new(entity.SectionVideo)
 	if err := c.SectionVideoRepository.FindByUUID(tx, sectionVideo, request.VideoUUID); err != nil {
-		c.Log.Warnf("Failed find course section from database : %+v", err)
+		c.Log.Warnf("Failed find video from database : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
