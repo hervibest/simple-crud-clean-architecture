@@ -18,6 +18,7 @@ type RouteConfig struct {
 
 	DiscountController    *http.DiscountController
 	TransactionController *http.TransactionController
+	UploadController      *http.UploadController
 
 	Throttle                *middleware.Throttle
 	UserAuthMiddleware      fiber.Handler

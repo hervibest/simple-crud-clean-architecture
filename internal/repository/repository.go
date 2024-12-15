@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"simple-crud-clean-architecture/internal/entity"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -53,4 +55,8 @@ func (r *Repository[T]) FindManyByUUIDs(db *gorm.DB, uuids []uuid.UUID) ([]*T, e
 	}
 
 	return model, nil
+}
+
+func (r *Repository[T]) AttachUploadedFile(db *gorm.DB, model *T, file *entity.File) error {
+	return db.Model(model).Association("File").Append(file)
 }

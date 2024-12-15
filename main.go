@@ -17,6 +17,7 @@ func main() {
 	emailHelper := helper.NewGomailSender(viperConfig, log)
 	midtrans := helper.NewMidtransClient(viperConfig, log)
 	customValidator := helper.NewCustomValidator(viperConfig)
+	minioClient := helper.NewMinio(viperConfig, log)
 
 	config.Bootstrap(&config.BootstrapConfig{
 		DB:              db,
@@ -28,6 +29,7 @@ func main() {
 		TokenHelper:     tokenHelper,
 		EmailHelper:     emailHelper,
 		Midtrans:        midtrans,
+		MinioClient:     minioClient,
 		CustomValidator: customValidator,
 	})
 

@@ -195,3 +195,58 @@ func (c *SectionVideoController) Delete(ctx *fiber.Ctx) error {
 		Data:    response,
 	})
 }
+
+func (c *SectionVideoController) UploadVideo(ctx *fiber.Ctx) error {
+
+	parsedSecVideoUUID, err := uuid.Parse(ctx.Params("secVideoId"))
+	if err != nil {
+		c.Log.WithError(err).Error("error parsing section video uuid")
+		return fiber.ErrBadRequest
+	}
+
+	sectionUUID := ctx.FormValue("SectionUUID")
+	if sectionUUID == "" {
+		c.Log.Error("missing SectionUUID in form data")
+		return fiber.NewError(fiber.StatusBadRequest, "missing SectionUUID")
+	}
+
+	parsedSectionUUID, err := uuid.Parse(sectionUUID)
+	if err != nil {
+		c.Log.WithError(err).Error("error parsing SectionUUID")
+		return fiber.ErrBadRequest
+	}
+
+	file, err := ctx.FormFile("file")
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "missing file: "+err.Error())
+	}
+
+	const maxFileSize = 10 * 1024 * 1024 // 10MB
+	if file.Size > maxFileSize {
+		return fiber.NewError(fiber.StatusRequestEntityTooLarge, "File size exceeds the 10MB limit")
+	}
+
+	request := &model.UploadVideoRequest{
+		VideoUUID:   parsedSecVideoUUID,
+		SectionUUID: parsedSectionUUID,
+	}
+
+	if validationErr := c.Validator.Validate(request); validationErr != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr,
+			Message: "validation error",
+		})
+	}
+
+	response, err := c.UseCase.UploadVideo(ctx.UserContext(), file, request)
+	if err != nil {
+		c.Log.WithError(err).Error("error updating section video")
+		return err
+	}
+
+	return ctx.JSON(model.DataResponse[*model.SecVideoResponse]{
+		Success: true,
+		Data:    response,
+	})
+}

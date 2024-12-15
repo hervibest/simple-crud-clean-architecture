@@ -5,14 +5,19 @@ import (
 	"simple-crud-clean-architecture/internal/model"
 )
 
-func SecVideoToResponse(courseSec *entity.SectionVideo) *model.SecVideoResponse {
+func SecVideoToResponse(secVideo *entity.SectionVideo) *model.SecVideoResponse {
 
 	return &model.SecVideoResponse{
-		UUID:      courseSec.UUID,
-		Title:     courseSec.Title,
-		Notes:     courseSec.Notes,
-		Sequence:  courseSec.Sequence,
-		CreatedAt: courseSec.CreatedAt,
-		UpdatedAt: courseSec.UpdatedAt,
+		UUID:         secVideo.UUID,
+		Title:        secVideo.Title,
+		Notes:        secVideo.Notes,
+		Sequence:     secVideo.Sequence,
+		OriginalName: secVideo.OriginalName,
+		OriginalSize: secVideo.OriginalSize,
+		OriginalMime: secVideo.OriginalMime,
+		Bucket:       secVideo.Bucket,
+		Dir:          secVideo.Dir,
+		CreatedAt:    secVideo.CreatedAt,
+		UpdatedAt:    secVideo.UpdatedAt,
 	}
 }

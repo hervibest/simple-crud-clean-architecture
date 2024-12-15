@@ -19,6 +19,7 @@ type SectionVideo struct {
 	MediaID      string    `gorm:"column:media_id"`
 	Bucket       string    `gorm:"column:bucket"`
 	Dir          string    `gorm:"column:dir"`
+	File         *File     `gorm:"polymorphic:Fileable;polymorphicValue:Video"`
 	CreatedAt    time.Time `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt    time.Time `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 }

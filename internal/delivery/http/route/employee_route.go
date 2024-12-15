@@ -4,7 +4,7 @@ func (c *RouteConfig) SetupEmployeeRoute() {
 	employeeRoute := c.App.Group("/api/employee", c.EmployeeAuthMiddleware)
 
 	// employeeRoute.Patch("/update", c.EmployeeController.Update)
-	employeeRoute.Post("/register", c.EmployeeController.Register)
+	// employeeRoute.Post("/register", c.EmployeeController.Register)
 	employeeRoute.Get("/current", c.EmployeeController.Current)
 	employeeRoute.Delete("/logout", c.EmployeeController.Logout)
 
@@ -24,6 +24,7 @@ func (c *RouteConfig) SetupEmployeeRoute() {
 	sectionVideoRoute.Get("", c.SecVideoController.List)
 	sectionVideoRoute.Get("/:secVideoID", c.SecVideoController.Get)
 	sectionVideoRoute.Post("", c.SecVideoController.Create)
+	sectionVideoRoute.Post("/upload/:secVideoID", c.SecVideoController.UploadVideo)
 	sectionVideoRoute.Put("/:secVideoID", c.SecVideoController.Update)
 	sectionVideoRoute.Delete("/:secVideoID", c.SecVideoController.Delete)
 

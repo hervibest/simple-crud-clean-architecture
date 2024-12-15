@@ -26,6 +26,7 @@ type BootstrapConfig struct {
 	TokenHelper     *helper.TokenHelper
 	EmailHelper     *helper.GomailSender
 	Midtrans        *helper.MidtransClient
+	MinioClient     *helper.Minio
 	CustomValidator helper.CustomValidator
 }
 
@@ -49,9 +50,9 @@ func Bootstrap(config *BootstrapConfig) {
 	courseCatUseCase := usecase.NewCourseCatUseCase(config.DB, config.Log, config.Validate, courseCatRepository)
 	courseUseCase := usecase.NewCourseUseCase(config.DB, config.Log, config.Validate, courseRepository, courseCatRepository)
 	courseSecUseCase := usecase.NewCourseSecUseCase(config.DB, config.Log, config.Validate, courseSecRepository, courseRepository)
-	courseVidUseCase := usecase.NewSecVideoUseCase(config.DB, config.Log, config.Validate, courseSecRepository, courseVidRepository)
-
+	courseVidUseCase := usecase.NewSecVideoUseCase(config.DB, config.Log, config.Validate, courseSecRepository, courseVidRepository, config.MinioClient)
 	discountUseCase := usecase.NewDiscountUseCase(config.DB, config.Log, discountRepository, courseRepository)
+
 	transactionUseCase := usecase.NewTransactionUseCase(config.DB, config.Log, config.Validate, transactionRepository, courseRepository, userRepository, config.Midtrans)
 
 	// setup controller
@@ -65,6 +66,9 @@ func Bootstrap(config *BootstrapConfig) {
 
 	discountController := http.NewDiscountController(discountUseCase, config.Log, config.CustomValidator)
 	transactionController := http.NewTransactionController(transactionUseCase, config.Log, config.Midtrans, config.CustomValidator)
+
+	// upload controller
+	uploadController := http.NewUploadController(config.Log, config.CustomValidator, *config.MinioClient)
 
 	// setup throttle
 	throttle := middleware.NewThrottle(1, 60)
@@ -86,6 +90,7 @@ func Bootstrap(config *BootstrapConfig) {
 		SecVideoController:  courseVidControler,
 
 		DiscountController:    discountController,
+		UploadController:      uploadController,
 		TransactionController: transactionController,
 
 		Throttle:                throttle,

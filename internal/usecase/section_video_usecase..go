@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"mime/multipart"
 	"simple-crud-clean-architecture/internal/entity"
 	"simple-crud-clean-architecture/internal/helper"
 	"simple-crud-clean-architecture/internal/model"
@@ -21,16 +22,19 @@ type SecVideoUseCase struct {
 	Validate                *validator.Validate
 	CourseSectionRepository *repository.CourseSectionRepository
 	SectionVideoRepository  *repository.SectionVideoRepository
+	Minio                   *helper.Minio
 }
 
 func NewSecVideoUseCase(db *gorm.DB, logger *logrus.Logger, validate *validator.Validate,
-	courseSecRepository *repository.CourseSectionRepository, sectionVideoRepository *repository.SectionVideoRepository) *SecVideoUseCase {
+	courseSecRepository *repository.CourseSectionRepository, sectionVideoRepository *repository.SectionVideoRepository,
+	minio *helper.Minio) *SecVideoUseCase {
 	return &SecVideoUseCase{
 		DB:                      db,
 		Log:                     logger,
 		Validate:                validate,
 		CourseSectionRepository: courseSecRepository,
 		SectionVideoRepository:  sectionVideoRepository,
+		Minio:                   minio,
 	}
 }
 
@@ -252,4 +256,66 @@ func (c *SecVideoUseCase) Delete(ctx context.Context, request *model.DeleteSecVi
 	}
 
 	return converter.SecVideoToResponse(sectionVideo), nil
+}
+
+func (c *SecVideoUseCase) UploadVideo(ctx context.Context, file *multipart.FileHeader, request *model.UploadVideoRequest) (*model.SecVideoResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	helper.SanitiseStruct(request)
+
+	section := new(entity.CourseSection)
+	if err := c.CourseSectionRepository.FindByUUID(tx, section, request.SectionUUID); err != nil {
+		c.Log.Warnf("Failed find course from database : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	sectionVideo := new(entity.SectionVideo)
+	if err := c.SectionVideoRepository.FindByUUID(tx, sectionVideo, request.VideoUUID); err != nil {
+		c.Log.Warnf("Failed find course section from database : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	upload, err := c.Minio.UploadFileToMinio(ctx, file, "video")
+	if err != nil {
+		return nil, err
+	}
+
+	newVideoFile := &entity.File{
+
+		UUID:     uuid.New(),
+		Filename: upload.Filename,
+		Mimetype: upload.Mimetype,
+		Path:     upload.URL,
+		Size:     upload.Size,
+	}
+
+	if err := c.SectionVideoRepository.AttachUploadedFile(tx, sectionVideo, newVideoFile); err != nil {
+		c.Log.Warnf("Failed to attach video")
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to attach video"+err.Error())
+	}
+	// OriginalName string    `gorm:"column:original_name"`
+	// OriginalSize float64   `gorm:"column:original_size"`
+	// OriginalMime string    `gorm:"column:original_mime"`
+	// MediaID      string    `gorm:"column:media_id"`
+	// Bucket       string    `gorm:"column:bucket"`
+	// Dir          string    `gorm:"column:dir"`
+
+	sectionVideo.OriginalName = newVideoFile.Filename
+	sectionVideo.OriginalSize = float64(newVideoFile.Size)
+	sectionVideo.OriginalMime = newVideoFile.Mimetype
+	sectionVideo.Dir = newVideoFile.Path
+
+	if err := c.SectionVideoRepository.Update(tx, sectionVideo); err != nil {
+		c.Log.WithError(err).Error("error creating course")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.WithError(err).Error("error creating course")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.SecVideoToResponse(sectionVideo), nil
+
 }
