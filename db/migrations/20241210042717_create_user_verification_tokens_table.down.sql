@@ -1,1 +1,1 @@
-drop table user_verification_tokens;
+drop table if EXISTS user_verification_tokens;

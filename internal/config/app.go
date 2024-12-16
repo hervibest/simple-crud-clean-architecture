@@ -28,6 +28,7 @@ type BootstrapConfig struct {
 	Midtrans        *helper.MidtransClient
 	MinioClient     *helper.Minio
 	CustomValidator helper.CustomValidator
+	Job             Job
 }
 
 func Bootstrap(config *BootstrapConfig) {
@@ -77,6 +78,10 @@ func Bootstrap(config *BootstrapConfig) {
 	userAuthMiddleware := middleware.NewUserAuth(userUseCase)
 	buyableCourseMiddleware := middleware.NewBuyableCourse(courseUseCase)
 	employeeAuthMiddleware := middleware.NewEmployeeAuth(employeeUseCase)
+
+	// Scheduler
+	job := config.Job
+	job.RunCron(discountUseCase)
 
 	routeConfig := route.RouteConfig{
 		App: config.App,

@@ -4,6 +4,7 @@ import (
 	"simple-crud-clean-architecture/internal/entity"
 	"simple-crud-clean-architecture/internal/helper"
 	"simple-crud-clean-architecture/internal/model"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -91,4 +92,20 @@ func (r *DiscountRepository) FilterDiscount(request *model.SearchDiscountRequest
 
 		return tx
 	}
+}
+
+func (r *DiscountRepository) ActivateDiscount(db *gorm.DB) error {
+	return db.Model(new(entity.Discount)).
+		Where("is_active = ?", false).
+		Where("start_active_at <= ?", time.Now()).
+		Where("valid_until >= ?", time.Now()).
+		Update("is_active", true).Error
+}
+
+func (r *DiscountRepository) DeactivateDiscount(db *gorm.DB) error {
+	return db.Model(new(entity.Discount)).
+		Where("is_active = ?", true).
+		Where("valid_until < ?", time.Now()).
+		Or("start_active_at > ?", time.Now()).
+		Update("is_active", false).Error
 }

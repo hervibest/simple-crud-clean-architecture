@@ -18,6 +18,7 @@ func main() {
 	midtrans := helper.NewMidtransClient(viperConfig, log)
 	customValidator := helper.NewCustomValidator(viperConfig)
 	minioClient := helper.NewMinio(viperConfig, log)
+	job := config.NewCronJob(viperConfig, log)
 
 	config.Bootstrap(&config.BootstrapConfig{
 		DB:              db,
@@ -31,6 +32,7 @@ func main() {
 		Midtrans:        midtrans,
 		MinioClient:     minioClient,
 		CustomValidator: customValidator,
+		Job:             job,
 	})
 
 	webPort := viperConfig.GetInt("web.port")

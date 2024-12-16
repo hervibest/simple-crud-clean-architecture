@@ -226,3 +226,41 @@ func (c *DiscountUseCase) Get(ctx context.Context, request *model.GetDiscountReq
 
 	return converter.DiscountToResponse(course), nil
 }
+
+func (c *DiscountUseCase) ActivateDiscount(ctx context.Context) error {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := c.DiscountRepository.ActivateDiscount(tx); err != nil {
+		c.Log.Warnf("Error activating discount using cron" + err.Error())
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Error comitting tx activate discount using cron" + err.Error())
+		return err
+	}
+
+	c.Log.Warnf("Activate discount using Job")
+
+	return nil
+}
+
+func (c *DiscountUseCase) DeactivateDiscount(ctx context.Context) error {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := c.DiscountRepository.DeactivateDiscount(tx); err != nil {
+		c.Log.Warnf("Error deactivating discount using cron" + err.Error())
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Error commiting tx deactivate discount using cron" + err.Error())
+		return err
+	}
+
+	c.Log.Warnf("Deactivate discount using Job")
+
+	return nil
+}
