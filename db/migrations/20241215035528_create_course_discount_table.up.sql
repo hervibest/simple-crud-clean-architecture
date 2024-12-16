@@ -1,4 +1,4 @@
-create table course_discount (
+create table if not EXISTS course_discount (
     id SERIAL primary key,
     course_id int not null,
     discount_id int not null,

@@ -1,4 +1,4 @@
-create table files (
+create table if not EXISTS files (
     id SERIAL primary key,
     uuid UUID not null,
     filename VARCHAR(500) not null,

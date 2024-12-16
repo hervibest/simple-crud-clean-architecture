@@ -1,1 +1,1 @@
-drop table employees;
+drop table if EXISTS employees;

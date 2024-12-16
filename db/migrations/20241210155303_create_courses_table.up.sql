@@ -1,4 +1,4 @@
-create table courses (
+create table if not EXISTS courses (
     id SERIAL primary key,
     uuid UUID not null,
     name VARCHAR(255) not null unique,

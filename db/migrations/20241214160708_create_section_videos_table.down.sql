@@ -1,1 +1,1 @@
-drop table section_videos;
+drop table if EXISTS section_videos;

@@ -1,4 +1,4 @@
-create table course_sections (
+create table if not EXISTS course_sections (
     id SERIAL primary key,
     uuid UUID not null,
     course_id int not null,

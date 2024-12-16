@@ -1,1 +1,1 @@
-drop table course_user;
+drop table if EXISTS course_user;

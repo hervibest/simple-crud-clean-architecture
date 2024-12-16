@@ -1,4 +1,4 @@
--- Drop Transactions Table (if needed)
+-- Drop Discount Table (if needed)
 do $$
 begin
     if exists (select 1 from information_schema.tables where table_name = 'discounts') then

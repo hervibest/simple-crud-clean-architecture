@@ -1,4 +1,4 @@
-create table employees (
+create table if not EXISTS employees (
     id SERIAL primary key,
     uuid UUID not null,
     email VARCHAR(100) not null unique,

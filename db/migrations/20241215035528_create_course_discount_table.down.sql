@@ -1,1 +1,1 @@
-drop table course_discount;
+drop table if EXISTS course_discount;

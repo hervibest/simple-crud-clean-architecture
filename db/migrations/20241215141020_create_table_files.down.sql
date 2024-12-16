@@ -1,1 +1,1 @@
-drop table files
+DROP TABLE IF EXISTS files;

@@ -1,4 +1,4 @@
-create table section_videos (
+create table if not EXISTS section_videos (
     id SERIAL primary key,
     uuid UUID not null,
     section_id int not null,

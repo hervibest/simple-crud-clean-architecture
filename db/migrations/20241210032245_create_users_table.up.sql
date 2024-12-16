@@ -1,4 +1,4 @@
-create table users (
+create table if not EXISTS users (
     id SERIAL primary key,
     uuid UUID not null,
     email VARCHAR(100) not null unique,

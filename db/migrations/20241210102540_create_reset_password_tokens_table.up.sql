@@ -1,4 +1,4 @@
-create table reset_password_tokens
+create table if not EXISTS reset_password_tokens
 (
     email      varchar(100) not null,
     token      varchar(100) not null,

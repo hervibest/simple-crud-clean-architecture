@@ -1,1 +1,1 @@
-drop table reset_password_tokens;
+drop table if EXISTS reset_password_tokens;

@@ -1,1 +1,1 @@
-drop table course_sections;
+drop table if EXISTS course_sections;

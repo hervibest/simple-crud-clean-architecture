@@ -1,4 +1,4 @@
-create table course_category_course (
+create table if not EXISTS course_category_course (
     id SERIAL primary key,
     course_id int not null,
     course_category_id int not null,

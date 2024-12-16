@@ -1,4 +1,4 @@
-create table user_verification_tokens
+create table if not EXISTS user_verification_tokens
 (
     email      varchar(100) not null,
     token      varchar(100) not null,
