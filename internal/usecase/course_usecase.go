@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"mime/multipart"
 	"simple-crud-clean-architecture/internal/entity"
 	"simple-crud-clean-architecture/internal/helper"
 	"simple-crud-clean-architecture/internal/model"
@@ -23,16 +24,19 @@ type CourseUseCase struct {
 	Validate            *validator.Validate
 	CourseRepository    *repository.CourseRepository
 	CourseCatRepository *repository.CourseCategoryRepository
+	Minio               *helper.Minio
 }
 
 func NewCourseUseCase(db *gorm.DB, logger *logrus.Logger, validate *validator.Validate,
-	courseRepository *repository.CourseRepository, courseCatRepository *repository.CourseCategoryRepository) *CourseUseCase {
+	courseRepository *repository.CourseRepository, courseCatRepository *repository.CourseCategoryRepository,
+	minio *helper.Minio) *CourseUseCase {
 	return &CourseUseCase{
 		DB:                  db,
 		Log:                 logger,
 		Validate:            validate,
 		CourseRepository:    courseRepository,
 		CourseCatRepository: courseCatRepository,
+		Minio:               minio,
 	}
 }
 
@@ -110,7 +114,7 @@ func (c *CourseUseCase) Search(ctx context.Context, request *model.SearchCourseR
 
 func (c *CourseUseCase) Get(ctx context.Context, request *model.GetCourseRequest) (*model.CourseResponse, error) {
 
-	course, err := c.CourseRepository.FindWithDetails(c.DB, request.UUID, true, true)
+	course, err := c.CourseRepository.FindWithDetails(c.DB, request.UUID, true, true, true)
 	if err != nil {
 		c.Log.WithError(err).Error("error getting course")
 		return nil, fiber.ErrNotFound
@@ -221,5 +225,51 @@ func (c *CourseUseCase) UserGetPurchasedCourse(ctx context.Context, request *mod
 	}
 
 	return responses, pageMetadata, nil
+
+}
+
+func (c *CourseUseCase) UploadThumbnail(ctx context.Context, file *multipart.FileHeader, request *model.UploadThumbnailRequest) (*model.CourseResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	helper.SanitiseStruct(request)
+
+	course := new(entity.Course)
+	if err := c.CourseRepository.FindByUUID(tx, course, request.CourseUUID); err != nil {
+		c.Log.Warnf("Failed find course from database : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
+	upload, err := c.Minio.UploadFileToMinio(ctx, file, "thumbnail")
+	if err != nil {
+		return nil, err
+	}
+
+	newThumbnailFile := &entity.File{
+
+		UUID:     uuid.New(),
+		Filename: upload.Filename,
+		Mimetype: upload.Mimetype,
+		Path:     upload.URL,
+		Size:     upload.Size,
+	}
+
+	if err := c.CourseRepository.AttachUploadedFile(tx, course, newThumbnailFile); err != nil {
+		c.Log.Warnf("Failed to attach video")
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to attach thumbnail"+err.Error())
+	}
+	// OriginalName string    `gorm:"column:original_name"`
+	// OriginalSize float64   `gorm:"column:original_size"`
+	// OriginalMime string    `gorm:"column:original_mime"`
+	// MediaID      string    `gorm:"column:media_id"`
+	// Bucket       string    `gorm:"column:bucket"`
+	// Dir          string    `gorm:"column:dir"`
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.WithError(err).Error("error uploading thumbnail")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.CourseToResponse(course), nil
 
 }

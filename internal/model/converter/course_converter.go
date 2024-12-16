@@ -21,19 +21,25 @@ func CourseToResponse(course *entity.Course) *model.CourseResponse {
 			finalPrice = applyDiscount(course.Price, &discountResponse)
 		}
 	}
+	var URL string
+
+	if course.File != nil {
+		URL = course.File.Path
+	}
 
 	return &model.CourseResponse{
-		UUID:        course.UUID,
-		Name:        course.Name,
-		Slug:        course.Slug,
-		Description: course.Description,
-		Price:       course.Price, // Harga asli
-		FinalPrice:  finalPrice,   // Harga setelah diskon (atau harga asli jika tidak ada diskon)
-		IsActive:    course.IsActive,
-		Discount:    discountResponsePointer,
-		Categories:  courseCatResponses,
-		CreatedAt:   course.CreatedAt,
-		UpdatedAt:   course.UpdatedAt,
+		UUID:         course.UUID,
+		Name:         course.Name,
+		Slug:         course.Slug,
+		Description:  course.Description,
+		Price:        course.Price, // Harga asli
+		FinalPrice:   finalPrice,   // Harga setelah diskon (atau harga asli jika tidak ada diskon)
+		IsActive:     course.IsActive,
+		Discount:     discountResponsePointer,
+		ThumbnailURL: URL,
+		Categories:   courseCatResponses,
+		CreatedAt:    course.CreatedAt,
+		UpdatedAt:    course.UpdatedAt,
 	}
 }
 

@@ -37,7 +37,7 @@ func (r *CourseRepository) SyncCategory(db *gorm.DB, course *entity.Course, cate
 	return db.Model(course).Association("Categories").Append(categories)
 }
 
-func (r *CourseRepository) FindWithDetails(db *gorm.DB, uuid uuid.UUID, withCategories bool, withDiscount bool) (*entity.Course, error) {
+func (r *CourseRepository) FindWithDetails(db *gorm.DB, uuid uuid.UUID, withCategories bool, withDiscount bool, withMedia bool) (*entity.Course, error) {
 	var course entity.Course
 	query := db
 
@@ -49,6 +49,10 @@ func (r *CourseRepository) FindWithDetails(db *gorm.DB, uuid uuid.UUID, withCate
 		query = query.Preload("Discounts", func(db *gorm.DB) *gorm.DB {
 			return db.Where("is_active = ?", true).Order("created_at asc").Limit(1)
 		})
+	}
+
+	if withMedia {
+		query = query.Preload("File")
 	}
 
 	err := query.First(&course, "uuid = ?", uuid).Error

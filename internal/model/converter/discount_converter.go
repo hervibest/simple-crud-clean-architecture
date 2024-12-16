@@ -34,9 +34,3 @@ func DTODiscountToResponse(discount entity.Discount) model.DiscountResponse {
 		ValidUntil:    discount.ValidUntil,
 	}
 }
-
-// func DiscountUUIDToResponse(discount *entity.Discount) *model.DiscountUUIDresponse {
-// 	return &model.DiscountUUIDresponse{
-// 		UUID: discount.UUID,
-// 	}
-// }

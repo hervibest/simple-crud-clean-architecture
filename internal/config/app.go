@@ -48,7 +48,7 @@ func Bootstrap(config *BootstrapConfig) {
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, config.Redis, config.TokenHelper, config.EmailHelper)
 	employeeUseCase := usecase.NewEmployeeUseCase(config.DB, config.Log, config.Validate, employeeRepository, config.Redis, config.TokenHelper, config.EmailHelper)
 	courseCatUseCase := usecase.NewCourseCatUseCase(config.DB, config.Log, config.Validate, courseCatRepository)
-	courseUseCase := usecase.NewCourseUseCase(config.DB, config.Log, config.Validate, courseRepository, courseCatRepository)
+	courseUseCase := usecase.NewCourseUseCase(config.DB, config.Log, config.Validate, courseRepository, courseCatRepository, config.MinioClient)
 	courseSecUseCase := usecase.NewCourseSecUseCase(config.DB, config.Log, config.Validate, courseSecRepository, courseRepository)
 	courseVidUseCase := usecase.NewSecVideoUseCase(config.DB, config.Log, config.Validate, courseSecRepository, courseVidRepository, config.MinioClient)
 	discountUseCase := usecase.NewDiscountUseCase(config.DB, config.Log, discountRepository, courseRepository)

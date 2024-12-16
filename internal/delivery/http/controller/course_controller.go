@@ -98,7 +98,7 @@ func (c *CourseController) List(ctx *fiber.Ctx) error {
 }
 
 func (c *CourseController) Get(ctx *fiber.Ctx) error {
-	parsedUUID, err := uuid.Parse(ctx.Params("courseID"))
+	parsedUUID, err := uuid.Parse(ctx.Params("courseId"))
 	if err != nil {
 		c.Log.WithError(err).Error("error parsing course uuid")
 		return fiber.NewError(fiber.StatusBadRequest, "invalid course uuid")
@@ -136,7 +136,7 @@ func (c *CourseController) Update(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	parsedUUID, err := uuid.Parse(ctx.Params("courseID"))
+	parsedUUID, err := uuid.Parse(ctx.Params("courseId"))
 	if err != nil {
 		c.Log.WithError(err).Error("error parsing course uuid")
 		return fiber.NewError(fiber.StatusBadRequest, "invalid course uuid")
@@ -209,4 +209,46 @@ func (c *CourseController) ListUserPurchased(ctx *fiber.Ctx) error {
 		Paging: pageMetadata,
 	})
 
+}
+
+func (c *CourseController) UploadThumbnail(ctx *fiber.Ctx) error {
+
+	parsedCourseUUID, err := uuid.Parse(ctx.Params("courseId"))
+	if err != nil {
+		c.Log.WithError(err).Error("error parsing course uuid")
+		return fiber.ErrBadRequest
+	}
+
+	file, err := ctx.FormFile("file")
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "missing file: "+err.Error())
+	}
+
+	const maxFileSize = 2 * 1024 * 1024 // 10MB
+	if file.Size > maxFileSize {
+		return fiber.NewError(fiber.StatusRequestEntityTooLarge, "File size exceeds the 2MB limit")
+	}
+
+	request := &model.UploadThumbnailRequest{
+		CourseUUID: parsedCourseUUID,
+	}
+
+	if validationErr := c.Validator.Validate(request); validationErr != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr,
+			Message: "validation error",
+		})
+	}
+
+	response, err := c.UseCase.UploadThumbnail(ctx.UserContext(), file, request)
+	if err != nil {
+		c.Log.WithError(err).Error("error updating section video")
+		return err
+	}
+
+	return ctx.JSON(model.DataResponse[*model.CourseResponse]{
+		Success: true,
+		Data:    response,
+	})
 }

@@ -36,8 +36,9 @@ func (c *RouteConfig) SetupEmployeeRoute() {
 
 	courseRoute.Get("", c.CourseController.List)
 	courseRoute.Post("", c.CourseController.Create)
-	courseRoute.Get("/:courseID", c.CourseController.Get)
-	courseRoute.Put("/:courseID", c.CourseController.Update)
+	courseRoute.Post("/upload/:courseId", c.CourseController.UploadThumbnail)
+	courseRoute.Get("/:courseId", c.CourseController.Get)
+	courseRoute.Put("/:courseId", c.CourseController.Update)
 
 	discountRoute := employeeRoute.Group("/discount", c.EmployeeAuthMiddleware)
 
