@@ -23,6 +23,18 @@ func DiscountToResponse(discount *entity.Discount) *model.DiscountResponse {
 	}
 }
 
+func DTODiscountToResponse(discount entity.Discount) model.DiscountResponse {
+	return model.DiscountResponse{
+		UUID:          discount.UUID,
+		Name:          discount.Name,
+		Type:          discount.Type,
+		Value:         discount.Value,
+		IsActive:      discount.IsActive,
+		StartActiveAt: discount.StartActiveAt,
+		ValidUntil:    discount.ValidUntil,
+	}
+}
+
 // func DiscountUUIDToResponse(discount *entity.Discount) *model.DiscountUUIDresponse {
 // 	return &model.DiscountUUIDresponse{
 // 		UUID: discount.UUID,

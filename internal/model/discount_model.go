@@ -28,7 +28,7 @@ type UpdateDiscountRequest struct {
 	Value         float64           `json:"value"`
 	StartActiveAt time.Time         `json:"start_active_at"`
 	ValidUntil    time.Time         `json:"valid_until"`
-	Courses       []string          `json:"courses"`
+	Courses       []string          `json:"course_uuid"`
 	CourseUUIDs   []uuid.UUID
 }
 
@@ -52,9 +52,9 @@ type DiscountResponse struct {
 
 	StartActiveAt time.Time        `json:"start_active_at"`
 	ValidUntil    time.Time        `json:"valid_until"`
-	Courses       []CourseResponse `json:"courses"`
-	CreatedAt     time.Time        `json:"created_at,omitempty"`
-	UpdatedAt     time.Time        `json:"updated_at,omitempty"`
+	Courses       []CourseResponse `json:"courses,omitempty"`
+	CreatedAt     *time.Time       `json:"created_at,omitempty"`
+	UpdatedAt     *time.Time       `json:"updated_at,omitempty"`
 }
 
 type SearchDiscountRequest struct {

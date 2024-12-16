@@ -110,7 +110,7 @@ func (c *CourseUseCase) Search(ctx context.Context, request *model.SearchCourseR
 
 func (c *CourseUseCase) Get(ctx context.Context, request *model.GetCourseRequest) (*model.CourseResponse, error) {
 
-	course, err := c.CourseRepository.FindWithDetails(c.DB, request.UUID, true)
+	course, err := c.CourseRepository.FindWithDetails(c.DB, request.UUID, true, true)
 	if err != nil {
 		c.Log.WithError(err).Error("error getting course")
 		return nil, fiber.ErrNotFound

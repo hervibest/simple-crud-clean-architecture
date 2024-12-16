@@ -3,22 +3,50 @@ package converter
 import (
 	"simple-crud-clean-architecture/internal/entity"
 	"simple-crud-clean-architecture/internal/model"
+
+	"github.com/google/uuid"
 )
 
 func CourseToResponse(course *entity.Course) *model.CourseResponse {
+	courseCatResponses := Map(course.Categories, DTOCourseCatToResponse)
 
-	coureCatResponses := Map(course.Categories, DTOCourseCatToResponse)
+	finalPrice := course.Price
+
+	var discountResponsePointer *model.DiscountResponse
+
+	if len(course.Discounts) != 0 {
+		discountResponse := DTODiscountToResponse(course.Discounts[0])
+		discountResponsePointer = &discountResponse
+		if discountResponse.UUID != uuid.Nil && discountResponse.IsActive {
+			finalPrice = applyDiscount(course.Price, &discountResponse)
+		}
+	}
 
 	return &model.CourseResponse{
 		UUID:        course.UUID,
 		Name:        course.Name,
 		Slug:        course.Slug,
 		Description: course.Description,
-		Price:       course.Price,
+		Price:       course.Price, // Harga asli
+		FinalPrice:  finalPrice,   // Harga setelah diskon (atau harga asli jika tidak ada diskon)
 		IsActive:    course.IsActive,
-		Categories:  coureCatResponses,
+		Discount:    discountResponsePointer,
+		Categories:  courseCatResponses,
 		CreatedAt:   course.CreatedAt,
 		UpdatedAt:   course.UpdatedAt,
+	}
+}
+
+// func isDiscountValid(discount *model.DiscountResponse) bool {
+// 	now := time.Now()
+// 	return discount.ValidUntil.After(now) && discount.StartActiveAt.Before(now)
+// }
+
+func applyDiscount(originalPrice float64, discount *model.DiscountResponse) float64 {
+	if discount.Type == "PERCENT" {
+		return originalPrice * (1 - discount.Value/100)
+	} else {
+		return originalPrice - discount.Value
 	}
 }
 

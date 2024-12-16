@@ -16,8 +16,8 @@ type Discount struct {
 	Type          enum.DiscountType `gorm:"column:type"`
 	StartActiveAt time.Time         `gorm:"column:start_active_at"`
 	ValidUntil    time.Time         `gorm:"column:valid_until"`
-	CreatedAt     time.Time         `gorm:"column:created_at;autoCreateTime"`
-	UpdatedAt     time.Time         `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
+	CreatedAt     *time.Time        `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt     *time.Time        `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 	Courses       []Course          `gorm:"many2many:course_discount;foreignKey:id;joinForeignKey:discount_id;references:id;joinReferences:course_id"`
 }
 

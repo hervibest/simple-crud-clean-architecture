@@ -125,6 +125,7 @@ func (c *DiscountController) Update(ctx *fiber.Ctx) error {
 		Value:         request.Value,
 		StartActiveAt: request.StartActiveAt,
 		ValidUntil:    request.ValidUntil,
+		CourseUUIDs:   request.CourseUUIDs,
 	}
 
 	if err := c.UseCase.Validate(ctx.UserContext(), validateRequest); err != nil {
