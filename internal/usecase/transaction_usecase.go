@@ -44,6 +44,22 @@ func NewTransactionUseCase(db *gorm.DB, logger *logrus.Logger, validate *validat
 	}
 }
 
+func (c *TransactionUseCase) EmployeeSearch(ctx context.Context, request *model.SearchTransactionRequest) ([]model.TransactionResponse, *model.PageMetadata, error) {
+
+	transactions, pageMetadata, err := c.TransactionRepository.EmployeeSearch(c.DB, request)
+	if err != nil {
+		c.Log.WithError(err).Error("error getting transactions")
+		return nil, nil, fiber.ErrInternalServerError
+	}
+
+	responses := make([]model.TransactionResponse, len(transactions))
+	for i, transaction := range transactions {
+		responses[i] = *converter.TransactionToResponse(&transaction)
+	}
+
+	return responses, pageMetadata, nil
+}
+
 func (c *TransactionUseCase) GetDetailTransaction(ctx context.Context, trxId uuid.UUID) (*model.TransactionResponse, error) {
 	transaction, err := c.TransactionRepository.GetTransactionWithDetails(c.DB, trxId)
 	if err != nil {

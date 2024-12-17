@@ -40,12 +40,26 @@ type UpdateTransactionStatus struct {
 	ExternalCallbackResponse json.RawMessage
 }
 
+type SearchTransactionRequest struct {
+	// TransactionID string `json:"transaction_uuid" validate:"max=255"`
+	CourseName  string `validate:"max=255"`
+	UserEmail   string `validate:"max=255"`
+	VoucherName string `validate:"max=255"`
+	OrderBy     string `validate:"max=255"`
+	Page        int    `validate:"min=1"`
+	Size        int    `validate:"min=1,max=100"`
+}
+
 type TransactionResponse struct {
 	TrxID    uuid.UUID              `json:"uuid,omitempty"`
 	UserID   uuid.UUID              `json:"user_uuid,omitempty"`
 	CourseID uuid.UUID              `json:"course_uuid,omitempty"`
 	Amount   float64                `json:"amount,omitempty"`
 	Status   enum.TransactionStatus `json:"status,omitempty"`
+
+	User    *UserResponse    `json:"user,omitempty"`
+	Course  *CourseResponse  `json:"course,omitempty"`
+	Voucher *VoucherResponse `json:"voucher,omitempty"`
 
 	SnapToken                string          `json:"snap_token,omitempty"`
 	ExternalStatus           string          `json:"external_status,omitempty"`

@@ -15,12 +15,38 @@ func SnapToResponse(transaction_id string, snap *snap.Response) *model.SnapshotT
 }
 
 func TransactionToResponse(transaction *entity.Transaction) *model.TransactionResponse {
+
+	var userResponse *model.UserResponse
+	if transaction.User != nil {
+		userResponseValue := DTOUserToResponse(*transaction.User)
+		userResponse = &userResponseValue
+	}
+
+	var courseResponse *model.CourseResponse
+	if transaction.Course != nil {
+		courseResponseValue := DTOCourseToResponse(*transaction.Course)
+		courseResponse = &courseResponseValue
+
+	}
+
+	var voucherResponse *model.VoucherResponse
+	if transaction.Voucher != nil {
+		voucherResponseValue := DTOVoucherToResponse(*transaction.Voucher)
+		voucherResponse = &voucherResponseValue
+
+	}
+
 	return &model.TransactionResponse{
 		TrxID:    transaction.TrxID,
 		UserID:   transaction.User.UUID,
 		CourseID: transaction.Course.UUID,
 		Amount:   transaction.Amount,
-		Status:   transaction.Status,
+
+		User:    userResponse,
+		Course:  courseResponse,
+		Voucher: voucherResponse,
+
+		Status: transaction.Status,
 	}
 }
 

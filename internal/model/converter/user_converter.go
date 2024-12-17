@@ -25,3 +25,13 @@ func UserToTokenResponse(user *entity.User) *model.UserResponse {
 		RefreshToken: user.RefreshToken,
 	}
 }
+
+func DTOUserToResponse(user entity.User) model.UserResponse {
+	return model.UserResponse{
+		UUID:       user.UUID,
+		Email:      user.Email,
+		CreatedAt:  user.CreatedAt,
+		UpdatedAt:  user.UpdatedAt,
+		VerifiedAt: user.VerifiedAt,
+	}
+}

@@ -55,6 +55,10 @@ func (c *RouteConfig) SetupEmployeeRoute() {
 	voucherRoute.Put("/update/:voucherID", c.VoucherController.Update)
 	voucherRoute.Post("/apply/:voucherCode", c.VoucherController.ApplyVoucher)
 
+	transactionRoute := employeeRoute.Group("/transactions", c.EmployeeAuthMiddleware)
+
+	transactionRoute.Get("", c.TransactionController.List)
+
 	// transactionRoute := c.App.Group("/api/transaction", c.EmployeeMiddleware)
 	// transactionRoute.Post("/buy", c.TransactionController.Buy)
 	// transactionRoute.Get("/:trxId", c.TransactionController.GetTransaction)

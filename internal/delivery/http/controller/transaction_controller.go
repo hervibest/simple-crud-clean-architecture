@@ -9,6 +9,7 @@ import (
 	"simple-crud-clean-architecture/internal/helper"
 	"simple-crud-clean-architecture/internal/model"
 	"simple-crud-clean-architecture/internal/usecase"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -29,6 +30,48 @@ func NewTransactionController(useCase *usecase.TransactionUseCase, log *logrus.L
 		Midtrans:  midtransHelper,
 		Validator: validator,
 	}
+}
+
+func (c *TransactionController) List(ctx *fiber.Ctx) error {
+
+	orderBy := strings.ToLower(ctx.Query("order_by", "asc"))
+
+	if orderBy != "asc" && orderBy != "desc" {
+		orderBy = "asc"
+	}
+
+	request := &model.SearchTransactionRequest{
+		// TransactionID: ctx.Query("transaction_uuid", ""),
+		CourseName:  ctx.Query("courseName", ""),
+		UserEmail:   ctx.Query("userEmail", ""),
+		VoucherName: ctx.Query("voucherName", ""),
+		OrderBy:     orderBy,
+		Page:        ctx.QueryInt("page", 1),
+		Size:        ctx.QueryInt("size", 10),
+	}
+
+	if validationErr := c.Validator.Validate(request); validationErr != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr,
+			Message: "validation error",
+		})
+	}
+
+	responses, pageMetadata, err := c.UseCase.EmployeeSearch(ctx.UserContext(), request)
+	if err != nil {
+		c.Log.WithError(err).Error("error searching course")
+		return err
+	}
+
+	baseURL := ctx.BaseURL() + ctx.Path()
+	helper.GeneratePageURLs(baseURL, pageMetadata)
+
+	return ctx.JSON(model.DataResponse[[]model.TransactionResponse]{Success: true,
+		Data:   responses,
+		Paging: pageMetadata,
+	})
+
 }
 
 func (c *TransactionController) GetTransaction(ctx *fiber.Ctx) error {
