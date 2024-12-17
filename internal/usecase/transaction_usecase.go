@@ -188,22 +188,26 @@ func (c *TransactionUseCase) UpdateTransactionStatus(ctx context.Context, reques
 	switch request.Status {
 	case enum.PaymentStatusSettlement:
 		transactionStatus = enum.TransactionStatusSuccess
+		transaction.PaidAt = time.Now()
+		transaction.SnapToken = ""
 	case enum.PaymentStatusPending:
-		transactionStatus = enum.TransactionStatusSuccess
+		transactionStatus = enum.TransactionStatusPending
 	case enum.PaymentStatusExpire:
-		transactionStatus = enum.TransactionStatusFailed
+		transactionStatus = enum.TransactionStatusExpired
 	case enum.PaymentStatusFailure:
 		transactionStatus = enum.TransactionStatusFailed
 	}
 
-	transaction.SnapToken = ""
 	transaction.Status = transactionStatus
 	transaction.ExternalStatus = request.Status
 	transaction.ExternalCallbackResponse = request.ExternalCallbackResponse
-	transaction.PaidAt = time.Now()
 
 	if err := c.TransactionRepository.Update(tx, transaction); err != nil {
 		return fiber.ErrInternalServerError
+	}
+
+	if transactionStatus != enum.TransactionStatusSuccess {
+		return nil
 	}
 
 	course := new(entity.Course)
