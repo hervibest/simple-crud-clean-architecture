@@ -52,7 +52,7 @@ func (r *CourseRepository) FindWithDetails(db *gorm.DB, uuid uuid.UUID, withCate
 	}
 
 	if withMedia {
-		query = query.Preload("File")
+		query = query.Preload("Thumbnail")
 	}
 
 	err := query.First(&course, "uuid = ?", uuid).Error

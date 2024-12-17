@@ -17,6 +17,7 @@ type RouteConfig struct {
 	SecVideoController  *http.SectionVideoController
 
 	DiscountController    *http.DiscountController
+	VoucherController     *http.VoucherController
 	TransactionController *http.TransactionController
 	UploadController      *http.UploadController
 

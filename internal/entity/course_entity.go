@@ -13,11 +13,13 @@ type Course struct {
 	Slug           string           `gorm:"column:slug"`
 	Description    string           `gorm:"column:description"`
 	Price          float64          `gorm:"column:price"`
+	FinalPrice     float64          `gorm:"-"`
 	IsActive       bool             `gorm:"column:is_active"`
 	CreatedAt      time.Time        `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt      time.Time        `gorm:"column:updated_at;autoCreateTime;autoUpdateTime"`
 	Categories     []CourseCategory `gorm:"many2many:course_category_course;foreignKey:id;joinForeignKey:course_id;references:id;joinReferences:course_category_id"`
 	Discounts      []Discount       `gorm:"many2many:course_discount;foreignKey:id;joinForeignKey:course_id;references:id;joinReferences:discount_id"`
+	Vourchers      []Voucher        `gorm:"many2many:course_voucher;foreignKey:id;joinForeignKey:course_id;references:id;joinReferences:voucher_id"`
 	Transaction    []Transaction    `gorm:"foreignKey:course_id;references:id"`
 	CourseSections []CourseSection  `gorm:"foreignKey:course_id;references:id"`
 	User           []User           `gorm:"many2many:course_user;foreignKey:id;joinForeignKey:course_id;references:id;joinReferences:user_id"`

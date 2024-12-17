@@ -23,3 +23,13 @@ func TransactionToResponse(transaction *entity.Transaction) *model.TransactionRe
 		Status:   transaction.Status,
 	}
 }
+
+func DTOTransactionToResponse(transaction entity.Transaction) model.TransactionResponse {
+	return model.TransactionResponse{
+		TrxID:    transaction.TrxID,
+		UserID:   transaction.User.UUID,
+		CourseID: transaction.Course.UUID,
+		Amount:   transaction.Amount,
+		Status:   transaction.Status,
+	}
+}

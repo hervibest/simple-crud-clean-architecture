@@ -32,7 +32,6 @@ type ResendEmailUserRequest struct {
 
 type SendResetPasswordRequest struct {
 	Email string `json:"email" validate:"required,email,max=100"`
-	Token string `json:"token" validate:"required"`
 }
 
 type ValidateResetTokenRequest struct {

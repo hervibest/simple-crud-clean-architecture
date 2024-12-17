@@ -25,11 +25,12 @@ type TransactionUseCase struct {
 	TransactionRepository *repository.TransactionRepository
 	CourseRepository      *repository.CourseRepository
 	UserRepository        *repository.UserRepository
+	VoucherRepository     *repository.VoucherRepository
 	Midtrans              *helper.MidtransClient
 }
 
 func NewTransactionUseCase(db *gorm.DB, logger *logrus.Logger, validate *validator.Validate,
-	transactionRepository *repository.TransactionRepository, courseRepository *repository.CourseRepository, userRepository *repository.UserRepository, midtransHelper *helper.MidtransClient) *TransactionUseCase {
+	transactionRepository *repository.TransactionRepository, courseRepository *repository.CourseRepository, userRepository *repository.UserRepository, voucherRepository *repository.VoucherRepository, midtransHelper *helper.MidtransClient) *TransactionUseCase {
 	return &TransactionUseCase{
 		DB:                    db,
 		Log:                   logger,
@@ -37,7 +38,9 @@ func NewTransactionUseCase(db *gorm.DB, logger *logrus.Logger, validate *validat
 		TransactionRepository: transactionRepository,
 		CourseRepository:      courseRepository,
 		UserRepository:        userRepository,
-		Midtrans:              midtransHelper,
+		VoucherRepository:     voucherRepository,
+
+		Midtrans: midtransHelper,
 	}
 }
 
@@ -55,18 +58,39 @@ func (c *TransactionUseCase) CreateTransaction(ctx context.Context, request *mod
 	defer tx.Rollback()
 
 	helper.SanitiseStruct(request)
-	course := new(entity.Course)
-	if err := c.CourseRepository.FindByUUID(tx, course, request.CourseUUID); err != nil {
+	course, err := c.CourseRepository.FindWithDetails(tx, request.CourseUUID, false, true, false)
+	if err != nil {
 		c.Log.WithError(err).Error("error finding course")
 		return nil, fiber.ErrBadRequest
 	}
 
+	//!!! Separation of Logic Concern in this code !!!!
+	courseResponse := converter.CourseToResponse(course)
+
+	finalPrice := courseResponse.FinalPrice
+	voucher := new(entity.Voucher)
+	if request.VoucherCode != "" {
+
+		voucherReponse, err := c.VoucherRepository.FindVoucherByCodeAndCourse(tx, course.ID, request.VoucherCode)
+		if err != nil {
+			return nil, fiber.NewError(fiber.StatusNotFound, "Invalid voucher code")
+		}
+		voucher = voucherReponse
+
+		if voucher.Type == "PERCENT" {
+			finalPrice = courseResponse.FinalPrice * (1 - voucher.Value/100)
+		} else {
+			finalPrice = courseResponse.FinalPrice - voucher.Value
+		}
+	}
+
 	transaction := &entity.Transaction{
-		TrxID:    uuid.New(),
-		UserID:   request.UserID,
-		CourseID: course.ID,
-		Amount:   course.Price,
-		Status:   enum.TransactionStatusPending,
+		TrxID:     uuid.New(),
+		UserID:    request.UserID,
+		CourseID:  course.ID,
+		Amount:    finalPrice,
+		Status:    enum.TransactionStatusPending,
+		VoucherID: voucher.ID,
 	}
 
 	if err := c.TransactionRepository.Create(tx, transaction); err != nil {

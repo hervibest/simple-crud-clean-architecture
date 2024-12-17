@@ -21,6 +21,7 @@ func CourseToResponse(course *entity.Course) *model.CourseResponse {
 			finalPrice = applyDiscount(course.Price, &discountResponse)
 		}
 	}
+
 	var URL string
 
 	if course.Thumbnail != nil {

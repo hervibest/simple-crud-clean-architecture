@@ -290,7 +290,7 @@ func (c *SecVideoUseCase) UploadVideo(ctx context.Context, file *multipart.FileH
 		Size:     upload.Size,
 	}
 
-	if err := c.SectionVideoRepository.AttachUploadedFile(tx, sectionVideo, newVideoFile); err != nil {
+	if err := c.SectionVideoRepository.AttachVideo(tx, sectionVideo, newVideoFile); err != nil {
 		c.Log.Warnf("Failed to attach video")
 		return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to attach video"+err.Error())
 	}

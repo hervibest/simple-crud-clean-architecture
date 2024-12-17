@@ -43,6 +43,7 @@ func Bootstrap(config *BootstrapConfig) {
 	courseVidRepository := repository.NewSecVideoRepository(config.Log)
 
 	discountRepository := repository.NewDiscountRepository(config.Log)
+	voucherRepository := repository.NewVoucherRepository(config.Log)
 	transactionRepository := repository.NewTransactionRepository(config.Log)
 
 	// setup use cases
@@ -52,9 +53,10 @@ func Bootstrap(config *BootstrapConfig) {
 	courseUseCase := usecase.NewCourseUseCase(config.DB, config.Log, config.Validate, courseRepository, courseCatRepository, config.MinioClient)
 	courseSecUseCase := usecase.NewCourseSecUseCase(config.DB, config.Log, config.Validate, courseSecRepository, courseRepository)
 	courseVidUseCase := usecase.NewSecVideoUseCase(config.DB, config.Log, config.Validate, courseSecRepository, courseVidRepository, config.MinioClient)
-	discountUseCase := usecase.NewDiscountUseCase(config.DB, config.Log, discountRepository, courseRepository)
 
-	transactionUseCase := usecase.NewTransactionUseCase(config.DB, config.Log, config.Validate, transactionRepository, courseRepository, userRepository, config.Midtrans)
+	discountUseCase := usecase.NewDiscountUseCase(config.DB, config.Log, discountRepository, courseRepository)
+	voucherUseCase := usecase.NewVoucherUseCase(config.DB, config.Log, voucherRepository, courseRepository)
+	transactionUseCase := usecase.NewTransactionUseCase(config.DB, config.Log, config.Validate, transactionRepository, courseRepository, userRepository, voucherRepository, config.Midtrans)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log, config.CustomValidator)
@@ -66,6 +68,7 @@ func Bootstrap(config *BootstrapConfig) {
 	courseVidControler := http.NewSecVideoController(courseVidUseCase, config.Log, config.CustomValidator)
 
 	discountController := http.NewDiscountController(discountUseCase, config.Log, config.CustomValidator)
+	voucherController := http.NewVoucherController(voucherUseCase, config.Log, config.CustomValidator)
 	transactionController := http.NewTransactionController(transactionUseCase, config.Log, config.Midtrans, config.CustomValidator)
 
 	// upload controller
@@ -95,6 +98,7 @@ func Bootstrap(config *BootstrapConfig) {
 		SecVideoController:  courseVidControler,
 
 		DiscountController:    discountController,
+		VoucherController:     voucherController,
 		UploadController:      uploadController,
 		TransactionController: transactionController,
 

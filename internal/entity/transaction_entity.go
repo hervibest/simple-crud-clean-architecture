@@ -9,15 +9,17 @@ import (
 )
 
 type Transaction struct {
-	ID       int                    `gorm:"column:id;primaryKey;autoIncrement"`
-	TrxID    uuid.UUID              `gorm:"column:trx_id"`
-	UserID   int                    `gorm:"column:user_id"`
-	CourseID int                    `gorm:"column:course_id"`
-	Amount   float64                `gorm:"column:amount"`
-	Status   enum.TransactionStatus `gorm:"column:status"`
+	ID        int                    `gorm:"column:id;primaryKey;autoIncrement"`
+	TrxID     uuid.UUID              `gorm:"column:trx_id"`
+	UserID    int                    `gorm:"column:user_id"`
+	CourseID  int                    `gorm:"column:course_id"`
+	Amount    float64                `gorm:"column:amount"`
+	Status    enum.TransactionStatus `gorm:"column:status"`
+	VoucherID int                    `gorm:"coloumn:voucher_id"`
 
-	User   User   `gorm:"foreignKey:user_id"`
-	Course Course `gorm:"foreignKey:course_id"`
+	User    User    `gorm:"foreignKey:user_id"`
+	Course  Course  `gorm:"foreignKey:course_id"`
+	Voucher Voucher `gorm:"foreignKey:voucher_id"`
 
 	SnapToken                string                     `gorm:"column:snap_token"`
 	ExternalStatus           enum.MidtransPaymentStatus `gorm:"column:external_status"`

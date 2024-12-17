@@ -115,12 +115,12 @@ func (c *DiscountUseCase) Validate(ctx context.Context, request *model.ValidateD
 
 	for _, course := range courses {
 		coursePriceToCompare := course.Price
-		if request.Type == enum.DiscounTypeRebate && coursePriceToCompare < request.Value {
+		if request.Type == enum.DiscountTypeRebate && coursePriceToCompare < request.Value {
 			return fiber.NewError(fiber.StatusUnprocessableEntity, "requested Discount will cause a minus price on course")
 		}
-		c.Log.Infof("ini adalah perhitungan validasi" + string(request.Type) + string(enum.DiscounTypePercent))
+		c.Log.Infof("ini adalah perhitungan validasi" + string(request.Type) + string(enum.DiscountTypePercent))
 
-		if request.Type == enum.DiscounTypePercent {
+		if request.Type == enum.DiscountTypePercent {
 			coursePriceToCompare = course.Price - request.Value/100*course.Price
 			c.Log.Infof("ini adalah perhitungan validasi" + strconv.FormatFloat(coursePriceToCompare, 'f', 2, 64))
 			if coursePriceToCompare <= 0 {
