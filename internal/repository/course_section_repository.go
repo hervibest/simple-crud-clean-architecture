@@ -23,7 +23,7 @@ func NewCourseSectionRepository(log *logrus.Logger) *CourseSectionRepository {
 
 func (r *CourseSectionRepository) CountByTitle(db *gorm.DB, title string) (int64, error) {
 	var total int64
-	err := db.Model(new(entity.CourseSection)).Where("title = ?", title).Count(&total).Error
+	err := db.Model(new(entity.CourseSection)).Where("LOWER(title) = LOWER(?)", title).Count(&total).Error
 	return total, err
 }
 

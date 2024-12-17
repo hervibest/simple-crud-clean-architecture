@@ -254,7 +254,7 @@ func (c *CourseUseCase) UploadThumbnail(ctx context.Context, file *multipart.Fil
 		Size:     upload.Size,
 	}
 
-	if err := c.CourseRepository.AttachUploadedFile(tx, course, newThumbnailFile); err != nil {
+	if err := c.CourseRepository.AttachThumbnail(tx, course, newThumbnailFile); err != nil {
 		c.Log.Warnf("Failed to attach video")
 		return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to attach thumbnail"+err.Error())
 	}

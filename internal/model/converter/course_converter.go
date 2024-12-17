@@ -23,8 +23,8 @@ func CourseToResponse(course *entity.Course) *model.CourseResponse {
 	}
 	var URL string
 
-	if course.File != nil {
-		URL = course.File.Path
+	if course.Thumbnail != nil {
+		URL = course.Thumbnail.Path
 	}
 
 	return &model.CourseResponse{

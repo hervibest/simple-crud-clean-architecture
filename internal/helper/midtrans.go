@@ -1,7 +1,6 @@
 package helper
 
 import (
-	"fmt"
 	"simple-crud-clean-architecture/internal/model"
 
 	"github.com/midtrans/midtrans-go"
@@ -16,9 +15,7 @@ type MidtransClient struct {
 }
 
 func NewMidtransClient(viper *viper.Viper, log *logrus.Logger) *MidtransClient {
-
 	midtransServerKey := viper.GetString("app.midtrans_server_key")
-	fmt.Println(midtransServerKey)
 	return &MidtransClient{
 		midtransServerKey: midtransServerKey,
 		log:               log,

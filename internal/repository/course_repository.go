@@ -143,3 +143,7 @@ func (r *CourseRepository) UserGetPurchasedCourse(db *gorm.DB, request *model.Se
 
 	return courses, pageMetadata, nil
 }
+
+func (r *CourseRepository) AttachThumbnail(db *gorm.DB, course *entity.Course, file *entity.File) error {
+	return db.Model(course).Association("Thumbnail").Append(file)
+}

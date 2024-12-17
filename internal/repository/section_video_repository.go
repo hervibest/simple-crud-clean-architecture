@@ -111,3 +111,7 @@ func (r *SectionVideoRepository) FilterSecVideo(request *model.SearchSecVideosRe
 		return tx
 	}
 }
+
+func (r *SectionVideoRepository) AttachVideo(db *gorm.DB, sectionVideo *entity.SectionVideo, file *entity.File) error {
+	return db.Model(sectionVideo).Association("Video").Append(file)
+}

@@ -63,12 +63,12 @@ func NewMinio(viper *viper.Viper, log *logrus.Logger) *Minio {
 	}
 }
 
-func (m *Minio) GetBucketName() string {
+func (m *Minio) getBucketName() string {
 	BucketName := m.minioBucketName
 	return BucketName
 }
 
-func (m *Minio) GetEnpoint() string {
+func (m *Minio) getEndpoint() string {
 	Endpoint := m.enpoint
 	return Endpoint
 }
@@ -84,7 +84,7 @@ func (m *Minio) UploadFileToMinio(ctx context.Context, file *multipart.FileHeade
 	fileKey := path + string(RandomNumber(31)) + "_" + file.Filename
 	contentType := file.Header.Get("Content-Type")
 
-	s3PutObjectOutput, err := m.MinioClient.PutObject(ctx, m.GetBucketName(), fileKey, uploadFile, file.Size, minio.PutObjectOptions{
+	s3PutObjectOutput, err := m.MinioClient.PutObject(ctx, m.getBucketName(), fileKey, uploadFile, file.Size, minio.PutObjectOptions{
 		ContentType: contentType,
 	})
 	if err != nil {
@@ -101,14 +101,14 @@ func (m *Minio) UploadFileToMinio(ctx context.Context, file *multipart.FileHeade
 	fileResponse.ETag = s3PutObjectOutput.ETag
 	fileResponse.Expiration = s3PutObjectOutput.Expiration
 
-	videoURL, err := m.MinioClient.PresignedGetObject(ctx, m.GetBucketName(), fileKey, 1*time.Hour, nil)
+	fileURL, err := m.MinioClient.PresignedGetObject(ctx, m.getBucketName(), fileKey, 1*time.Hour, nil)
 	if err != nil {
 		m.log.Warnf("failed to generate presigned URL:" + err.Error())
 
 		return nil, fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
-	fileResponse.URL = videoURL.String()
+	fileResponse.URL = fileURL.String()
 	fileResponse.Filename = fileKey
 	fileResponse.Mimetype = contentType
 	fileResponse.Size = file.Size
@@ -118,7 +118,7 @@ func (m *Minio) UploadFileToMinio(ctx context.Context, file *multipart.FileHeade
 
 func (m *Minio) DeleteFromMinio(ctx context.Context, fileName string) (bool, error) {
 
-	err := m.MinioClient.RemoveObject(ctx, m.GetBucketName(), fileName, minio.RemoveObjectOptions{ForceDelete: true})
+	err := m.MinioClient.RemoveObject(ctx, m.getBucketName(), fileName, minio.RemoveObjectOptions{ForceDelete: true})
 	if err != nil {
 		return false, fmt.Errorf("failed to delete file: %w", err)
 	}

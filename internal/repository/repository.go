@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"simple-crud-clean-architecture/internal/entity"
-
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -41,9 +39,9 @@ func (r *Repository[T]) CountByEmail(db *gorm.DB, email any) (int64, error) {
 	return total, err
 }
 
-func (r *Repository[T]) CountByName(db *gorm.DB, email string) (int64, error) {
+func (r *Repository[T]) CountByName(db *gorm.DB, name string) (int64, error) {
 	var total int64
-	err := db.Model(new(T)).Where("name = ?", email).Count(&total).Error
+	err := db.Model(new(T)).Where("LOWER(name) = LOWER(?)", name).Count(&total).Error
 	return total, err
 }
 
@@ -55,8 +53,4 @@ func (r *Repository[T]) FindManyByUUIDs(db *gorm.DB, uuids []uuid.UUID) ([]*T, e
 	}
 
 	return model, nil
-}
-
-func (r *Repository[T]) AttachUploadedFile(db *gorm.DB, model *T, file *entity.File) error {
-	return db.Model(model).Association("File").Append(file)
 }
