@@ -65,7 +65,7 @@ func Bootstrap(config *BootstrapConfig) {
 	courseCatController := http.NewCourseCatController(courseCatUseCase, config.Log, config.CustomValidator)
 	courseController := http.NewCourseController(courseUseCase, config.Log, config.CustomValidator)
 	courseSecController := http.NewCourseSecController(courseSecUseCase, config.Log, config.CustomValidator)
-	courseVidControler := http.NewSecVideoController(courseVidUseCase, config.Log, config.CustomValidator)
+	courseVidControler := http.NewSecVideoController(courseVidUseCase, config.Log, config.CustomValidator, config.MinioClient)
 
 	discountController := http.NewDiscountController(discountUseCase, config.Log, config.CustomValidator)
 	voucherController := http.NewVoucherController(voucherUseCase, config.Log, config.CustomValidator)

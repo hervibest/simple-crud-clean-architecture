@@ -22,4 +22,9 @@ func (c *RouteConfig) SetupGuestRoute() {
 
 	// c.App.Post("/api/register", c.EmployeeController.Register)
 
+	c.App.Post("/api/encode", c.SecVideoController.EncodeVideo)
+	// Definisikan routing
+	c.App.Get("/api/video/:videoID/playlist/:playlist", c.SecVideoController.ServeHLSPlaylist)
+	c.App.Get("/api/video/:videoID/key/:key", c.SecVideoController.ServeHLSKey)
+
 }

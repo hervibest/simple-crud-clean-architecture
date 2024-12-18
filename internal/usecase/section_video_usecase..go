@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"mime/multipart"
 	"simple-crud-clean-architecture/internal/entity"
 	"simple-crud-clean-architecture/internal/helper"
@@ -318,4 +319,26 @@ func (c *SecVideoUseCase) UploadVideo(ctx context.Context, file *multipart.FileH
 
 	return converter.SecVideoToResponse(sectionVideo), nil
 
+}
+
+func (c *SecVideoUseCase) EncodeVideos(ctx context.Context) error {
+	encodedVideoEntity, err := c.Minio.ProcessVideo(ctx, "internal/delivery/http/videos/file_example_MP4_1920_18MG.mp4", 1)
+	if err != nil {
+		return fmt.Errorf("failed to get unencoded videos: %w", err)
+	}
+
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	if err := c.SectionVideoRepository.Update(tx, encodedVideoEntity); err != nil {
+		c.Log.WithError(err).Error("error creating course")
+		return fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.Log.Warnf("Failed commit transaction : %+v", err)
+		return fiber.ErrInternalServerError
+	}
+
+	return nil
 }

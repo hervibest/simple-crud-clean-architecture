@@ -15,6 +15,7 @@ func SecVideoToResponse(secVideo *entity.SectionVideo) *model.SecVideoResponse {
 		OriginalName: secVideo.OriginalName,
 		OriginalSize: secVideo.OriginalSize,
 		OriginalMime: secVideo.OriginalMime,
+		MediaID:      secVideo.MediaID,
 		Bucket:       secVideo.Bucket,
 		Dir:          secVideo.Dir,
 		CreatedAt:    secVideo.CreatedAt,
