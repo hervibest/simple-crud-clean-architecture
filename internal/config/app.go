@@ -70,7 +70,7 @@ func Bootstrap(config *BootstrapConfig) {
 	courseCatController := http.NewCourseCatController(courseCatUseCase, config.Log, config.CustomValidator)
 	courseController := http.NewCourseController(courseUseCase, config.Log, config.CustomValidator)
 	courseSecController := http.NewCourseSecController(courseSecUseCase, config.Log, config.CustomValidator)
-	courseVidControler := http.NewSecVideoController(courseVidUseCase, config.Log, config.CustomValidator)
+	courseVidControler := http.NewSecVideoController(courseVidUseCase, config.Log, config.CustomValidator, config.MinioClient)
 
 	careerCatController := http.NewCareerCatController(careerCatUseCase, config.Log, config.CustomValidator)
 	careerController := http.NewCareerController(careerUseCase, config.Log, config.CustomValidator)
