@@ -19,6 +19,11 @@ type RouteConfig struct {
 	CareerCatController *http.CareerCatController
 	CareerController    *http.CareerController
 
+	CertifMaterialController *http.CertifMaterialController
+	CertifSkkniController    *http.CertifSkkniController
+	CertificateCatController *http.CertificateCatController
+	CertificateController    *http.CertificateController
+
 	DiscountController    *http.DiscountController
 	VoucherController     *http.VoucherController
 	TransactionController *http.TransactionController

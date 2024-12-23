@@ -78,4 +78,32 @@ func (c *RouteConfig) SetupEmployeeRoute() {
 	careerRoute.Get("/:careerId", c.CourseController.Get)
 	careerRoute.Put("/:careerId", c.CourseController.Update)
 
+	//Certificate
+	certificateCategoryRoute := employeeRoute.Group("/certificate-categories", c.EmployeeAuthMiddleware)
+	certificateCategoryRoute.Get("", c.CertificateCatController.List)
+	certificateCategoryRoute.Post("", c.CertificateCatController.Create)
+	certificateCategoryRoute.Get("/:certificateCatID", c.CertificateCatController.Get)
+	certificateCategoryRoute.Put("/:careerCatID", c.CertificateCatController.Update)
+
+	certificateRoute := employeeRoute.Group("/certificate", c.EmployeeAuthMiddleware)
+	certificateRoute.Get("", c.CertificateController.List)
+	certificateRoute.Post("", c.CertificateController.Create)
+	certificateRoute.Post("/upload/:careerId", c.CertificateController.UploadThumbnail)
+	certificateRoute.Get("/:careerId", c.CertificateController.Get)
+	certificateRoute.Put("/:careerId", c.CertificateController.Update)
+
+	materialRoute := certificateRoute.Group("/material", c.EmployeeAuthMiddleware)
+	materialRoute.Get("", c.CertifMaterialController.List)
+	materialRoute.Post("", c.CertifMaterialController.Create)
+	// materialRoute.Post("/upload/:careerId", c.CertifMaterialController.UploadThumbnail)
+	materialRoute.Get("/:careerId", c.CertifMaterialController.Get)
+	materialRoute.Put("/:careerId", c.CertifMaterialController.Update)
+
+	skkniRoute := certificateRoute.Group("/skkni", c.EmployeeAuthMiddleware)
+	skkniRoute.Get("", c.CertifSkkniController.List)
+	skkniRoute.Post("", c.CertifSkkniController.Create)
+	skkniRoute.Post("/upload/:careerId", c.CertifSkkniController.UploadThumbnail)
+	skkniRoute.Get("/:careerId", c.CertifSkkniController.Get)
+	skkniRoute.Put("/:careerId", c.CertifSkkniController.Update)
+
 }

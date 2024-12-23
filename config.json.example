@@ -1,0 +1,55 @@
+{
+    "app": {
+      "name": "simple_crud_clean_architecture",
+      "env": "development",
+      "frontend_url": "http://localhost:3000",
+      "backend_url": "http://localhost:5000",
+      "refresh_secret": "",
+      "access_secret": "",
+      "key_secret": "",
+      "access_token_expire_in_minute": 240,
+      "refresh_token_expire_in_day": 7,
+      "employee_access_token_expire_in_day": 1,
+      "midtrans_server_key": ""
+    },
+    "web": {
+      "prefork": false,
+      "port": 5000
+    },
+    "log": {
+      "level": 6
+    },
+    "database": {
+      "username": "",
+      "password": "",
+      "host": "localhost",
+      "port": 5433,
+      "name": "simple_crud_clean_architecture",
+      "pool": {
+        "idle": 10,
+        "max": 100,
+        "lifetime": 300
+      }
+    },
+    "gomail": {
+      "port": "587",
+      "username": "",
+      "password": "",
+      "host": "",
+      "from": "username@mail.com"
+    },
+    "minio": {
+      "minio_host": "127.0.0.1",
+      "minio_port": "9000",
+      "minio_root_user": "",
+      "minio_root_password": "",
+      "minio_tickets_bucket": "",
+      "minio_location": ""
+    },
+    "redis": {
+      "host": "localhost",
+      "port": 6379,
+      "password": ""
+    }
+  }
+  
