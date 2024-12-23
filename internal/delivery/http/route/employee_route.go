@@ -63,4 +63,19 @@ func (c *RouteConfig) SetupEmployeeRoute() {
 	// transactionRoute.Post("/buy", c.TransactionController.Buy)
 	// transactionRoute.Get("/:trxId", c.TransactionController.GetTransaction)
 
+	careerCategoryRoute := employeeRoute.Group("/career-categories", c.EmployeeAuthMiddleware)
+
+	careerCategoryRoute.Get("", c.CourseCatController.List)
+	careerCategoryRoute.Post("", c.CourseCatController.Create)
+	careerCategoryRoute.Get("/:careerCatID", c.CourseCatController.Get)
+	careerCategoryRoute.Put("/:careerCatID", c.CourseCatController.Update)
+
+	careerRoute := employeeRoute.Group("/career", c.EmployeeAuthMiddleware)
+
+	careerRoute.Get("", c.CourseController.List)
+	careerRoute.Post("", c.CourseController.Create)
+	careerRoute.Post("/upload/:careerId", c.CourseController.UploadThumbnail)
+	careerRoute.Get("/:careerId", c.CourseController.Get)
+	careerRoute.Put("/:careerId", c.CourseController.Update)
+
 }

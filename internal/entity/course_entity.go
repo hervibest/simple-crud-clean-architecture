@@ -23,7 +23,7 @@ type Course struct {
 	Transaction    []Transaction    `gorm:"foreignKey:course_id;references:id"`
 	CourseSections []CourseSection  `gorm:"foreignKey:course_id;references:id"`
 	User           []User           `gorm:"many2many:course_user;foreignKey:id;joinForeignKey:course_id;references:id;joinReferences:user_id"`
-	Thumbnail      *File            `gorm:"polymorphic:Fileable;polymorphicValue:Thumbnail"`
+	Thumbnail      *File            `gorm:"polymorphic:Fileable;polymorphicValue:CourseThumbnail"`
 }
 
 func (u *Course) TableName() string {

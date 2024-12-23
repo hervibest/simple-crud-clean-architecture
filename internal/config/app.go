@@ -42,6 +42,9 @@ func Bootstrap(config *BootstrapConfig) {
 	courseSecRepository := repository.NewCourseSectionRepository(config.Log)
 	courseVidRepository := repository.NewSecVideoRepository(config.Log)
 
+	careerCatRepository := repository.NewCareerCatRepository(config.Log)
+	careerRepository := repository.NewCareerRepository(config.Log)
+
 	discountRepository := repository.NewDiscountRepository(config.Log)
 	voucherRepository := repository.NewVoucherRepository(config.Log)
 	transactionRepository := repository.NewTransactionRepository(config.Log)
@@ -53,6 +56,8 @@ func Bootstrap(config *BootstrapConfig) {
 	courseUseCase := usecase.NewCourseUseCase(config.DB, config.Log, config.Validate, courseRepository, courseCatRepository, config.MinioClient)
 	courseSecUseCase := usecase.NewCourseSecUseCase(config.DB, config.Log, config.Validate, courseSecRepository, courseRepository)
 	courseVidUseCase := usecase.NewSecVideoUseCase(config.DB, config.Log, config.Validate, courseSecRepository, courseVidRepository, config.MinioClient)
+	careerCatUseCase := usecase.NewCareerCatUseCase(config.DB, config.Log, config.Validate, careerCatRepository)
+	careerUseCase := usecase.NewCareerUseCase(config.DB, config.Log, config.Validate, careerRepository, careerCatRepository, config.MinioClient)
 
 	discountUseCase := usecase.NewDiscountUseCase(config.DB, config.Log, discountRepository, courseRepository)
 	voucherUseCase := usecase.NewVoucherUseCase(config.DB, config.Log, voucherRepository, courseRepository)
@@ -66,6 +71,9 @@ func Bootstrap(config *BootstrapConfig) {
 	courseController := http.NewCourseController(courseUseCase, config.Log, config.CustomValidator)
 	courseSecController := http.NewCourseSecController(courseSecUseCase, config.Log, config.CustomValidator)
 	courseVidControler := http.NewSecVideoController(courseVidUseCase, config.Log, config.CustomValidator)
+
+	careerCatController := http.NewCareerCatController(careerCatUseCase, config.Log, config.CustomValidator)
+	careerController := http.NewCareerController(careerUseCase, config.Log, config.CustomValidator)
 
 	discountController := http.NewDiscountController(discountUseCase, config.Log, config.CustomValidator)
 	voucherController := http.NewVoucherController(voucherUseCase, config.Log, config.CustomValidator)
@@ -96,6 +104,9 @@ func Bootstrap(config *BootstrapConfig) {
 		CourseController:    courseController,
 		CourseSecController: courseSecController,
 		SecVideoController:  courseVidControler,
+
+		CareerCatController: careerCatController,
+		CareerController:    careerController,
 
 		DiscountController:    discountController,
 		VoucherController:     voucherController,

@@ -14,7 +14,6 @@ import (
 func NewDatabase(viper *viper.Viper, log *logrus.Logger) *gorm.DB {
 	username := viper.GetString("database.username")
 	password := viper.GetString("database.password")
-	fmt.Print(username, password)
 	host := viper.GetString("database.host")
 	port := viper.GetInt("database.port")
 	database := viper.GetString("database.name")
@@ -31,7 +30,7 @@ func NewDatabase(viper *viper.Viper, log *logrus.Logger) *gorm.DB {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.New(&logrusWriter{Logger: log}, logger.Config{
 			SlowThreshold:             time.Second * 5,
-			Colorful:                  false,
+			Colorful:                  true,
 			IgnoreRecordNotFoundError: true,
 			ParameterizedQueries:      true,
 			LogLevel:                  logger.Info,

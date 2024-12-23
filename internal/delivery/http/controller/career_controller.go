@@ -1,7 +1,6 @@
 package http
 
 import (
-	"simple-crud-clean-architecture/internal/delivery/http/middleware"
 	"simple-crud-clean-architecture/internal/helper"
 	"simple-crud-clean-architecture/internal/model"
 	"simple-crud-clean-architecture/internal/usecase"
@@ -11,23 +10,23 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type CourseController struct {
-	UseCase   *usecase.CourseUseCase
+type CareerController struct {
+	UseCase   *usecase.CareerUseCase
 	Log       *logrus.Logger
 	Validator helper.CustomValidator
 }
 
-func NewCourseController(useCase *usecase.CourseUseCase, log *logrus.Logger, validator helper.CustomValidator) *CourseController {
-	return &CourseController{
+func NewCareerController(useCase *usecase.CareerUseCase, log *logrus.Logger, validator helper.CustomValidator) *CareerController {
+	return &CareerController{
 		UseCase:   useCase,
 		Log:       log,
 		Validator: validator,
 	}
 }
 
-func (c *CourseController) Create(ctx *fiber.Ctx) error {
+func (c *CareerController) Create(ctx *fiber.Ctx) error {
 
-	request := new(model.CreateCourseRequest)
+	request := new(model.CreateCareerRequest)
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.WithError(err).Error("error parsing request body")
 		return fiber.ErrBadRequest
@@ -53,20 +52,20 @@ func (c *CourseController) Create(ctx *fiber.Ctx) error {
 
 	response, err := c.UseCase.Create(ctx.UserContext(), request)
 	if err != nil {
-		c.Log.WithError(err).Error("error creating course")
+		c.Log.WithError(err).Error("error creating career")
 		return err
 	}
 
-	return ctx.JSON(model.DataResponse[*model.CourseResponse]{
+	return ctx.JSON(model.DataResponse[*model.CareerResponse]{
 		Success: true,
 		Data:    response,
 	})
 }
 
-func (c *CourseController) List(ctx *fiber.Ctx) error {
+func (c *CareerController) List(ctx *fiber.Ctx) error {
 
-	request := &model.SearchCourseRequest{
-		Name:        ctx.Query("name", ""),
+	request := &model.SearchCareerRequest{
+		Title:       ctx.Query("title", ""),
 		Slug:        ctx.Query("slug", ""),
 		Description: ctx.Query("description", ""),
 		Page:        ctx.QueryInt("page", 1),
@@ -83,28 +82,28 @@ func (c *CourseController) List(ctx *fiber.Ctx) error {
 
 	responses, pageMetadata, err := c.UseCase.Search(ctx.UserContext(), request)
 	if err != nil {
-		c.Log.WithError(err).Error("error searching course")
+		c.Log.WithError(err).Error("error searching career")
 		return err
 	}
 
 	baseURL := ctx.BaseURL() + ctx.Path()
 	helper.GeneratePageURLs(baseURL, pageMetadata)
 
-	return ctx.JSON(model.DataResponse[[]model.CourseResponse]{Success: true,
+	return ctx.JSON(model.DataResponse[[]model.CareerResponse]{Success: true,
 		Data:   responses,
 		Paging: pageMetadata,
 	})
 
 }
 
-func (c *CourseController) Get(ctx *fiber.Ctx) error {
-	parsedUUID, err := uuid.Parse(ctx.Params("courseId"))
+func (c *CareerController) Get(ctx *fiber.Ctx) error {
+	parsedUUID, err := uuid.Parse(ctx.Params("careerId"))
 	if err != nil {
-		c.Log.WithError(err).Error("error parsing course uuid")
-		return fiber.NewError(fiber.StatusBadRequest, "invalid course uuid")
+		c.Log.WithError(err).Error("error parsing career uuid")
+		return fiber.NewError(fiber.StatusBadRequest, "invalid career uuid")
 	}
 
-	request := &model.GetCourseRequest{
+	request := &model.GetCareerRequest{
 		UUID: parsedUUID,
 	}
 
@@ -118,28 +117,28 @@ func (c *CourseController) Get(ctx *fiber.Ctx) error {
 
 	response, err := c.UseCase.Get(ctx.UserContext(), request)
 	if err != nil {
-		c.Log.WithError(err).Error("error getting course")
+		c.Log.WithError(err).Error("error getting career")
 		return err
 	}
 
-	return ctx.JSON(model.DataResponse[*model.CourseResponse]{
+	return ctx.JSON(model.DataResponse[*model.CareerResponse]{
 		Success: true,
 		Data:    response,
 	})
 }
 
-func (c *CourseController) Update(ctx *fiber.Ctx) error {
+func (c *CareerController) Update(ctx *fiber.Ctx) error {
 
-	request := new(model.UpdateCourseRequest)
+	request := new(model.UpdateCareerRequest)
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.WithError(err).Error("error parsing request body")
 		return fiber.ErrBadRequest
 	}
 
-	parsedUUID, err := uuid.Parse(ctx.Params("courseId"))
+	parsedUUID, err := uuid.Parse(ctx.Params("careerId"))
 	if err != nil {
-		c.Log.WithError(err).Error("error parsing course uuid")
-		return fiber.NewError(fiber.StatusBadRequest, "invalid course uuid")
+		c.Log.WithError(err).Error("error parsing career uuid")
+		return fiber.NewError(fiber.StatusBadRequest, "invalid career uuid")
 	}
 
 	request.UUID = parsedUUID
@@ -164,58 +163,21 @@ func (c *CourseController) Update(ctx *fiber.Ctx) error {
 
 	response, err := c.UseCase.Update(ctx.UserContext(), request)
 	if err != nil {
-		c.Log.WithError(err).Error("error updating course")
+		c.Log.WithError(err).Error("error updating career")
 		return err
 	}
 
-	return ctx.JSON(model.DataResponse[*model.CourseResponse]{
+	return ctx.JSON(model.DataResponse[*model.CareerResponse]{
 		Success: true,
 		Data:    response,
 	})
 }
 
-func (c *CourseController) ListUserPurchased(ctx *fiber.Ctx) error {
+func (c *CareerController) UploadThumbnail(ctx *fiber.Ctx) error {
 
-	request := &model.SearchCourseRequest{
-		Name:        ctx.Query("name", ""),
-		Slug:        ctx.Query("slug", ""),
-		Description: ctx.Query("description", ""),
-		Page:        ctx.QueryInt("page", 1),
-		Size:        ctx.QueryInt("size", 10),
-	}
-
-	auth := middleware.GetUser(ctx)
-	userId := auth.Id
-
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
-		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
-			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
-		})
-	}
-
-	responses, pageMetadata, err := c.UseCase.UserGetPurchasedCourse(ctx.UserContext(), request, userId)
+	parsedCareerUUID, err := uuid.Parse(ctx.Params("careerId"))
 	if err != nil {
-		c.Log.WithError(err).Error("error searching course")
-		return err
-	}
-
-	baseURL := ctx.BaseURL() + ctx.Path()
-	helper.GeneratePageURLs(baseURL, pageMetadata)
-
-	return ctx.JSON(model.DataResponse[[]model.CourseResponse]{Success: true,
-		Data:   responses,
-		Paging: pageMetadata,
-	})
-
-}
-
-func (c *CourseController) UploadThumbnail(ctx *fiber.Ctx) error {
-
-	parsedCourseUUID, err := uuid.Parse(ctx.Params("courseId"))
-	if err != nil {
-		c.Log.WithError(err).Error("error parsing course uuid")
+		c.Log.WithError(err).Error("error parsing career uuid")
 		return fiber.ErrBadRequest
 	}
 
@@ -229,8 +191,8 @@ func (c *CourseController) UploadThumbnail(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusRequestEntityTooLarge, "File size exceeds the 2MB limit")
 	}
 
-	request := &model.CourseThumbnailRequest{
-		CourseUUID: parsedCourseUUID,
+	request := &model.CareerThumbnailRequest{
+		CareerUUID: parsedCareerUUID,
 	}
 
 	if validationErr := c.Validator.Validate(request); validationErr != nil {
@@ -247,7 +209,7 @@ func (c *CourseController) UploadThumbnail(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	return ctx.JSON(model.DataResponse[*model.CourseResponse]{
+	return ctx.JSON(model.DataResponse[*model.CareerResponse]{
 		Success: true,
 		Data:    response,
 	})

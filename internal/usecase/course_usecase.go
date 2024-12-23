@@ -228,7 +228,7 @@ func (c *CourseUseCase) UserGetPurchasedCourse(ctx context.Context, request *mod
 
 }
 
-func (c *CourseUseCase) UploadThumbnail(ctx context.Context, file *multipart.FileHeader, request *model.UploadThumbnailRequest) (*model.CourseResponse, error) {
+func (c *CourseUseCase) UploadThumbnail(ctx context.Context, file *multipart.FileHeader, request *model.CourseThumbnailRequest) (*model.CourseResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 

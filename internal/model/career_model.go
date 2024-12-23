@@ -6,8 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-type CreateCourseRequest struct {
-	Name          string `json:"name" validate:"required,max=255"`
+type CreateCareerRequest struct {
+	Title         string `json:"title" validate:"required,max=255"`
 	Slug          string
 	Description   string   `json:"description"`
 	Price         float64  `json:"price"`
@@ -15,17 +15,17 @@ type CreateCourseRequest struct {
 	CategoryUUIDs []uuid.UUID
 }
 
-type GetCourseRequest struct {
+type GetCareerRequest struct {
 	UUID uuid.UUID `json:"uuid,omitempty" validate:"required"`
 }
 
-type GetPurchasedCourseRequest struct {
+type GetPurchasedCareerRequest struct {
 	UserID int `validate:"required"`
 }
 
-type UpdateCourseRequest struct {
+type UpdateCareerRequest struct {
 	UUID          uuid.UUID `json:"uuid,omitempty" validate:"required"`
-	Name          string    `json:"name" validate:"required,max=255"`
+	Title         string    `json:"title" validate:"required,max=255"`
 	Slug          string
 	Description   string   `json:"description"`
 	Price         float64  `json:"price"`
@@ -34,42 +34,41 @@ type UpdateCourseRequest struct {
 	CategoryUUIDs []uuid.UUID
 }
 
-type CourseResponse struct {
+type CareerResponse struct {
 	UUID         uuid.UUID           `json:"uuid,omitempty"`
-	Name         string              `json:"name,omitempty"`
+	Title        string              `json:"title,omitempty"`
 	Slug         string              `json:"slug,omitempty"`
 	Description  string              `json:"description,omitempty"`
 	Price        float64             `json:"original_price,omitempty"`
 	FinalPrice   float64             `json:"final_price,omitempty"`
 	IsActive     bool                `json:"is_active,omitempty"`
-	Categories   []CourseCatResponse `json:"categories,omitempty"`
+	Categories   []CareerCatResponse `json:"categories,omitempty"`
 	ThumbnailURL string              `json:"thumbnail_url,omitempty"`
-	Discount     *DiscountResponse   `json:"discount,omitempty"`
 	CreatedAt    time.Time           `json:"created_at,omitempty"`
 	UpdatedAt    time.Time           `json:"updated_at,omitempty"`
 }
 
-type SearchCourseRequest struct {
-	Name        string `json:"name" validate:"max=255"`
+type SearchCareerRequest struct {
+	Title       string `json:"title" validate:"max=255"`
 	Slug        string `json:"slug" validate:"max=255"`
 	Description string `json:"description" validate:"max=255"`
 	Page        int    `json:"page" validate:"min=1"`
 	Size        int    `json:"size" validate:"min=1,max=100"`
 }
 
-type SearchPurchasedCourse struct {
+type SearchPurchasedCareer struct {
 	UserID      int    `validate:"required"`
-	Name        string `json:"name" validate:"max=255"`
+	Title       string `json:"title" validate:"max=255"`
 	Slug        string `json:"slug" validate:"max=255"`
 	Description string `json:"description" validate:"max=255"`
 	Page        int    `json:"page" validate:"min=1"`
 	Size        int    `json:"size" validate:"min=1,max=100"`
 }
 
-type CourseUUIDresponse struct {
+type CareerUUIDresponse struct {
 	UUID uuid.UUID `json:"uuid,omitempty"`
 }
 
-type CourseThumbnailRequest struct {
-	CourseUUID uuid.UUID `validate:"required"`
+type CareerThumbnailRequest struct {
+	CareerUUID uuid.UUID `validate:"required"`
 }

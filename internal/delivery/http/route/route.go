@@ -16,6 +16,9 @@ type RouteConfig struct {
 	CourseSecController *http.CourseSectionController
 	SecVideoController  *http.SectionVideoController
 
+	CareerCatController *http.CareerCatController
+	CareerController    *http.CareerController
+
 	DiscountController    *http.DiscountController
 	VoucherController     *http.VoucherController
 	TransactionController *http.TransactionController

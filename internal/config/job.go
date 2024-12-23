@@ -53,7 +53,7 @@ func NewCronJob(viper *viper.Viper, log *logrus.Logger) Job {
 
 func (j *job) RunCron(discountUseCase *usecase.DiscountUseCase) {
 
-	j.Log.Infof("Start jobs...")
+	j.Log.Infof("Starting jobs...")
 
 	_, err := j.JobMethod.Every(1).Day().At(j.CronTime.Format("15:04")).Do(func() {
 		ctxActivate, cancelActivate := context.WithCancel(context.Background())
