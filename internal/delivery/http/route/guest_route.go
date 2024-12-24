@@ -4,7 +4,7 @@ func (c *RouteConfig) SetupGuestRoute() {
 	// GUEST USER ROUTE
 	userRoutes := c.App.Group("/api/user")
 	userRoutes.Post("/register", c.UserController.Register)
-	userRoutes.Post("/login", c.UserController.Login)
+	userRoutes.Post("/login", c.Throttle.ThrottleByKeyAndIP("user-login"), c.UserController.Login)
 	userRoutes.Post("/verify/:token", c.UserController.VerifyEmail)
 	userRoutes.Post("/request-resend-email", c.Throttle.ThrottleByKey("request-resend-email"), c.UserController.RequestEmailVerification)
 	userRoutes.Post("/request-access-token", c.UserController.RequestAccessToken)

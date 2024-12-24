@@ -98,7 +98,7 @@ func Bootstrap(config *BootstrapConfig) {
 	uploadController := http.NewUploadController(config.Log, config.CustomValidator, *config.MinioClient)
 
 	// setup throttle
-	throttle := middleware.NewThrottle(1, 60)
+	throttle := middleware.NewRedisRateLimiter(config.Redis, config.Config)
 
 	//setup
 	userAuthMiddleware := middleware.NewUserAuth(userUseCase)

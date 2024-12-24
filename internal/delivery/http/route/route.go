@@ -29,7 +29,7 @@ type RouteConfig struct {
 	TransactionController *http.TransactionController
 	UploadController      *http.UploadController
 
-	Throttle                *middleware.Throttle
+	Throttle                *middleware.RedisRateLimiter
 	UserAuthMiddleware      fiber.Handler
 	BuyableCourseMiddleware fiber.Handler
 	EmployeeAuthMiddleware  fiber.Handler
