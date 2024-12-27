@@ -9,7 +9,6 @@ import (
 	"simple-crud-clean-architecture/internal/model/converter"
 	"simple-crud-clean-architecture/internal/repository"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -19,19 +18,16 @@ import (
 type CertifSkkniUseCase struct {
 	DB                    *gorm.DB
 	Log                   *logrus.Logger
-	Validate              *validator.Validate
 	CertificateRepository *repository.CertificateRepository
 	CertifSkkniRepository *repository.CertifSkkniRepository
 	Minio                 *helper.Minio
 }
 
-func NewCertifSkkniUseCase(db *gorm.DB, logger *logrus.Logger, validate *validator.Validate,
-	certifSkkniRepository *repository.CertifSkkniRepository, certificateRepository *repository.CertificateRepository,
-	minio *helper.Minio) *CertifSkkniUseCase {
+func NewCertifSkkniUseCase(db *gorm.DB, logger *logrus.Logger, certifSkkniRepository *repository.CertifSkkniRepository,
+	certificateRepository *repository.CertificateRepository, minio *helper.Minio) *CertifSkkniUseCase {
 	return &CertifSkkniUseCase{
 		DB:                    db,
 		Log:                   logger,
-		Validate:              validate,
 		CertificateRepository: certificateRepository,
 		CertifSkkniRepository: certifSkkniRepository,
 		Minio:                 minio,

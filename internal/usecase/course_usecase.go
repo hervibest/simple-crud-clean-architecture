@@ -9,7 +9,6 @@ import (
 	"simple-crud-clean-architecture/internal/model/converter"
 	"simple-crud-clean-architecture/internal/repository"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -21,19 +20,16 @@ import (
 type CourseUseCase struct {
 	DB                  *gorm.DB
 	Log                 *logrus.Logger
-	Validate            *validator.Validate
 	CourseRepository    *repository.CourseRepository
 	CourseCatRepository *repository.CourseCategoryRepository
 	Minio               *helper.Minio
 }
 
-func NewCourseUseCase(db *gorm.DB, logger *logrus.Logger, validate *validator.Validate,
-	courseRepository *repository.CourseRepository, courseCatRepository *repository.CourseCategoryRepository,
-	minio *helper.Minio) *CourseUseCase {
+func NewCourseUseCase(db *gorm.DB, logger *logrus.Logger, courseRepository *repository.CourseRepository,
+	courseCatRepository *repository.CourseCategoryRepository, minio *helper.Minio) *CourseUseCase {
 	return &CourseUseCase{
 		DB:                  db,
 		Log:                 logger,
-		Validate:            validate,
 		CourseRepository:    courseRepository,
 		CourseCatRepository: courseCatRepository,
 		Minio:               minio,
@@ -191,10 +187,6 @@ func (c *CourseUseCase) Update(ctx context.Context, request *model.UpdateCourseR
 }
 
 func (c *CourseUseCase) GetPurchasedCourseUUID(ctx context.Context, request *model.GetPurchasedCourseRequest) ([]model.CourseUUIDresponse, error) {
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, fiber.ErrBadRequest
-	}
 
 	courses, err := c.CourseRepository.GetPurchasedCourseUUID(c.DB, request.UserID)
 	if err != nil {

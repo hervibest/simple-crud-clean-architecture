@@ -9,7 +9,6 @@ import (
 	"simple-crud-clean-architecture/internal/repository"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -22,19 +21,17 @@ import (
 type EmployeeUseCase struct {
 	DB                 *gorm.DB
 	Log                *logrus.Logger
-	Validate           *validator.Validate
 	EmployeeRepository *repository.EmployeeRepository
 	RedisClient        *redis.Client
 	TokenHelper        *helper.TokenHelper
 	EmailHelper        *helper.GomailSender
 }
 
-func NewEmployeeUseCase(db *gorm.DB, logger *logrus.Logger, validate *validator.Validate,
-	employeeRepository *repository.EmployeeRepository, redisClient *redis.Client, tokenHelper *helper.TokenHelper, emailHelper *helper.GomailSender) *EmployeeUseCase {
+func NewEmployeeUseCase(db *gorm.DB, logger *logrus.Logger, employeeRepository *repository.EmployeeRepository,
+	redisClient *redis.Client, tokenHelper *helper.TokenHelper, emailHelper *helper.GomailSender) *EmployeeUseCase {
 	return &EmployeeUseCase{
 		DB:                 db,
 		Log:                logger,
-		Validate:           validate,
 		RedisClient:        redisClient,
 		EmployeeRepository: employeeRepository,
 		TokenHelper:        tokenHelper,
@@ -117,12 +114,6 @@ func (c *EmployeeUseCase) Login(ctx context.Context, request *model.LoginEmploye
 }
 
 func (c *EmployeeUseCase) Verify(ctx context.Context, request *model.VerifyEmployeeRequest) (*model.Auth, error) {
-
-	err := c.Validate.Struct(request)
-	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
-	}
 
 	accessTokenDetails, err := c.TokenHelper.VerifyEmployeeAccessToken(request.Token)
 	if err != nil {

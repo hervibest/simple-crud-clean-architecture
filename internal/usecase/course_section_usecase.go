@@ -8,7 +8,6 @@ import (
 	"simple-crud-clean-architecture/internal/model/converter"
 	"simple-crud-clean-architecture/internal/repository"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -18,17 +17,15 @@ import (
 type CourseSecUseCase struct {
 	DB                      *gorm.DB
 	Log                     *logrus.Logger
-	Validate                *validator.Validate
 	CourseRepository        *repository.CourseRepository
 	CourseSectionRepository *repository.CourseSectionRepository
 }
 
-func NewCourseSecUseCase(db *gorm.DB, logger *logrus.Logger, validate *validator.Validate,
+func NewCourseSecUseCase(db *gorm.DB, logger *logrus.Logger,
 	courseSecRepository *repository.CourseSectionRepository, courseRepository *repository.CourseRepository) *CourseSecUseCase {
 	return &CourseSecUseCase{
 		DB:                      db,
 		Log:                     logger,
-		Validate:                validate,
 		CourseRepository:        courseRepository,
 		CourseSectionRepository: courseSecRepository}
 }

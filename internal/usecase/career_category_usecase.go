@@ -8,7 +8,6 @@ import (
 	"simple-crud-clean-architecture/internal/model/converter"
 	"simple-crud-clean-architecture/internal/repository"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -20,16 +19,13 @@ import (
 type CareerCatUseCase struct {
 	DB                  *gorm.DB
 	Log                 *logrus.Logger
-	Validate            *validator.Validate
 	CareerCatRepository *repository.CareerCategoryRepository
 }
 
-func NewCareerCatUseCase(db *gorm.DB, logger *logrus.Logger, validate *validator.Validate,
-	careerCatRepository *repository.CareerCategoryRepository) *CareerCatUseCase {
+func NewCareerCatUseCase(db *gorm.DB, logger *logrus.Logger, careerCatRepository *repository.CareerCategoryRepository) *CareerCatUseCase {
 	return &CareerCatUseCase{
 		DB:                  db,
 		Log:                 logger,
-		Validate:            validate,
 		CareerCatRepository: careerCatRepository,
 	}
 }

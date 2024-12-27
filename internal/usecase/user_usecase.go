@@ -9,7 +9,6 @@ import (
 	"simple-crud-clean-architecture/internal/repository"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -22,19 +21,17 @@ import (
 type UserUseCase struct {
 	DB             *gorm.DB
 	Log            *logrus.Logger
-	Validate       *validator.Validate
 	UserRepository *repository.UserRepository
 	RedisClient    *redis.Client
 	TokenHelper    *helper.TokenHelper
 	EmailHelper    *helper.GomailSender
 }
 
-func NewUserUseCase(db *gorm.DB, logger *logrus.Logger, validate *validator.Validate,
+func NewUserUseCase(db *gorm.DB, logger *logrus.Logger,
 	userRepository *repository.UserRepository, redisClient *redis.Client, tokenHelper *helper.TokenHelper, emailHelper *helper.GomailSender) *UserUseCase {
 	return &UserUseCase{
 		DB:             db,
 		Log:            logger,
-		Validate:       validate,
 		RedisClient:    redisClient,
 		UserRepository: userRepository,
 		TokenHelper:    tokenHelper,
@@ -351,12 +348,6 @@ func (c *UserUseCase) Current(ctx context.Context, request *model.GetUserRequest
 }
 
 func (c *UserUseCase) Verify(ctx context.Context, request *model.VerifyUserRequest) (*model.Auth, error) {
-
-	err := c.Validate.Struct(request)
-	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return nil, fiber.ErrBadRequest
-	}
 
 	accessTokenDetails, err := c.TokenHelper.VerifyAccessToken(request.Token)
 	if err != nil {

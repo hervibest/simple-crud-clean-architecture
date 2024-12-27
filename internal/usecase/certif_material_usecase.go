@@ -8,7 +8,6 @@ import (
 	"simple-crud-clean-architecture/internal/model/converter"
 	"simple-crud-clean-architecture/internal/repository"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -18,17 +17,15 @@ import (
 type CertifMaterialUseCase struct {
 	DB                           *gorm.DB
 	Log                          *logrus.Logger
-	Validate                     *validator.Validate
 	CertificateRepository        *repository.CertificateRepository
 	CertifMaterialtionRepository *repository.CertifMaterialRepository
 }
 
-func NewCertifMaterialUseCase(db *gorm.DB, logger *logrus.Logger, validate *validator.Validate,
-	certifMaterialRepository *repository.CertifMaterialRepository, certificateRepository *repository.CertificateRepository) *CertifMaterialUseCase {
+func NewCertifMaterialUseCase(db *gorm.DB, logger *logrus.Logger, certifMaterialRepository *repository.CertifMaterialRepository,
+	certificateRepository *repository.CertificateRepository) *CertifMaterialUseCase {
 	return &CertifMaterialUseCase{
 		DB:                           db,
 		Log:                          logger,
-		Validate:                     validate,
 		CertificateRepository:        certificateRepository,
 		CertifMaterialtionRepository: certifMaterialRepository}
 }

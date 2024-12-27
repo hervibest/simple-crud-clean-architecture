@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"simple-crud-clean-architecture/internal/helper"
 	"simple-crud-clean-architecture/internal/model"
 	"simple-crud-clean-architecture/internal/usecase"
 	"strings"
@@ -9,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func NewUserAuth(userUseCase *usecase.UserUseCase) fiber.Handler {
+func NewUserAuth(userUseCase *usecase.UserUseCase, validator helper.CustomValidator) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 
 		token := strings.TrimPrefix(ctx.Get("Authorization", ""), "Bearer ")
@@ -18,6 +19,14 @@ func NewUserAuth(userUseCase *usecase.UserUseCase) fiber.Handler {
 		}
 
 		request := &model.VerifyUserRequest{Token: token}
+		if validationErr := validator.Validate(request); validationErr != nil {
+			return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+				Success: false,
+				Errors:  validationErr,
+				Message: "validation error",
+			})
+		}
+
 		auth, err := userUseCase.Verify(ctx.UserContext(), request)
 		if err != nil {
 			return err
@@ -32,7 +41,7 @@ func GetUser(ctx *fiber.Ctx) *model.Auth {
 	return ctx.Locals("auth").(*model.Auth)
 }
 
-func NewBuyableCourse(courseUseCase *usecase.CourseUseCase) fiber.Handler {
+func NewBuyableCourse(courseUseCase *usecase.CourseUseCase, validator helper.CustomValidator) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 
 		request := new(model.CreateTransactionRequest)
@@ -56,6 +65,14 @@ func NewBuyableCourse(courseUseCase *usecase.CourseUseCase) fiber.Handler {
 
 		purchasedRequest := new(model.GetPurchasedCourseRequest)
 		purchasedRequest.UserID = auth.Id
+
+		if validationErr := validator.Validate(request); validationErr != nil {
+			return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+				Success: false,
+				Errors:  validationErr,
+				Message: "validation error",
+			})
+		}
 
 		courses, _ := courseUseCase.GetPurchasedCourseUUID(ctx.UserContext(), purchasedRequest)
 		for _, course := range courses {

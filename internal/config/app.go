@@ -8,7 +8,6 @@ import (
 	"simple-crud-clean-architecture/internal/repository"
 	"simple-crud-clean-architecture/internal/usecase"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
@@ -20,7 +19,6 @@ type BootstrapConfig struct {
 	DB              *gorm.DB
 	App             *fiber.App
 	Log             *logrus.Logger
-	Validate        *validator.Validate
 	Config          *viper.Viper
 	Redis           *redis.Client
 	TokenHelper     *helper.TokenHelper
@@ -55,23 +53,23 @@ func Bootstrap(config *BootstrapConfig) {
 	certifSkkniRepository := repository.NewCertifSkkniRepository(config.Log)
 
 	// setup use cases
-	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, config.Redis, config.TokenHelper, config.EmailHelper)
-	employeeUseCase := usecase.NewEmployeeUseCase(config.DB, config.Log, config.Validate, employeeRepository, config.Redis, config.TokenHelper, config.EmailHelper)
-	courseCatUseCase := usecase.NewCourseCatUseCase(config.DB, config.Log, config.Validate, courseCatRepository)
-	courseUseCase := usecase.NewCourseUseCase(config.DB, config.Log, config.Validate, courseRepository, courseCatRepository, config.MinioClient)
-	courseSecUseCase := usecase.NewCourseSecUseCase(config.DB, config.Log, config.Validate, courseSecRepository, courseRepository)
-	courseVidUseCase := usecase.NewSecVideoUseCase(config.DB, config.Log, config.Validate, courseSecRepository, courseVidRepository, config.MinioClient)
-	careerCatUseCase := usecase.NewCareerCatUseCase(config.DB, config.Log, config.Validate, careerCatRepository)
-	careerUseCase := usecase.NewCareerUseCase(config.DB, config.Log, config.Validate, careerRepository, careerCatRepository, config.MinioClient)
+	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, userRepository, config.Redis, config.TokenHelper, config.EmailHelper)
+	employeeUseCase := usecase.NewEmployeeUseCase(config.DB, config.Log, employeeRepository, config.Redis, config.TokenHelper, config.EmailHelper)
+	courseCatUseCase := usecase.NewCourseCatUseCase(config.DB, config.Log, courseCatRepository)
+	courseUseCase := usecase.NewCourseUseCase(config.DB, config.Log, courseRepository, courseCatRepository, config.MinioClient)
+	courseSecUseCase := usecase.NewCourseSecUseCase(config.DB, config.Log, courseSecRepository, courseRepository)
+	courseVidUseCase := usecase.NewSecVideoUseCase(config.DB, config.Log, courseSecRepository, courseVidRepository, config.MinioClient)
+	careerCatUseCase := usecase.NewCareerCatUseCase(config.DB, config.Log, careerCatRepository)
+	careerUseCase := usecase.NewCareerUseCase(config.DB, config.Log, careerRepository, careerCatRepository, config.MinioClient)
 
 	discountUseCase := usecase.NewDiscountUseCase(config.DB, config.Log, discountRepository, courseRepository)
 	voucherUseCase := usecase.NewVoucherUseCase(config.DB, config.Log, voucherRepository, courseRepository)
-	transactionUseCase := usecase.NewTransactionUseCase(config.DB, config.Log, config.Validate, transactionRepository, courseRepository, userRepository, voucherRepository, config.Midtrans)
+	transactionUseCase := usecase.NewTransactionUseCase(config.DB, config.Log, transactionRepository, courseRepository, userRepository, voucherRepository, config.Midtrans)
 
-	certifCatUseCase := usecase.NewCertifCatUseCase(config.DB, config.Log, config.Validate, certifCatRepository)
-	certifUseCase := usecase.NewCertificateUseCase(config.DB, config.Log, config.Validate, certifiRepository, certifCatRepository, config.MinioClient)
-	certifMaterialUseCase := usecase.NewCertifMaterialUseCase(config.DB, config.Log, config.Validate, certifMaterialRepository, certifiRepository)
-	certifSkkniUseCase := usecase.NewCertifSkkniUseCase(config.DB, config.Log, config.Validate, certifSkkniRepository, certifiRepository, config.MinioClient)
+	certifCatUseCase := usecase.NewCertifCatUseCase(config.DB, config.Log, certifCatRepository)
+	certifUseCase := usecase.NewCertificateUseCase(config.DB, config.Log, certifiRepository, certifCatRepository, config.MinioClient)
+	certifMaterialUseCase := usecase.NewCertifMaterialUseCase(config.DB, config.Log, certifMaterialRepository, certifiRepository)
+	certifSkkniUseCase := usecase.NewCertifSkkniUseCase(config.DB, config.Log, certifSkkniRepository, certifiRepository, config.MinioClient)
 
 	// setup controller
 	userController := http.NewUserController(userUseCase, config.Log, config.CustomValidator)
@@ -101,9 +99,9 @@ func Bootstrap(config *BootstrapConfig) {
 	throttle := middleware.NewRedisRateLimiter(config.Redis, config.Config)
 
 	//setup
-	userAuthMiddleware := middleware.NewUserAuth(userUseCase)
-	buyableCourseMiddleware := middleware.NewBuyableCourse(courseUseCase)
-	employeeAuthMiddleware := middleware.NewEmployeeAuth(employeeUseCase)
+	userAuthMiddleware := middleware.NewUserAuth(userUseCase, config.CustomValidator)
+	buyableCourseMiddleware := middleware.NewBuyableCourse(courseUseCase, config.CustomValidator)
+	employeeAuthMiddleware := middleware.NewEmployeeAuth(employeeUseCase, config.CustomValidator)
 
 	// Scheduler
 	job := config.Job

@@ -11,7 +11,6 @@ import (
 	"simple-crud-clean-architecture/internal/model"
 	"simple-crud-clean-architecture/internal/repository"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -21,7 +20,6 @@ import (
 type TransactionUseCase struct {
 	DB                    *gorm.DB
 	Log                   *logrus.Logger
-	Validate              *validator.Validate
 	TransactionRepository *repository.TransactionRepository
 	CourseRepository      *repository.CourseRepository
 	UserRepository        *repository.UserRepository
@@ -29,12 +27,12 @@ type TransactionUseCase struct {
 	Midtrans              *helper.MidtransClient
 }
 
-func NewTransactionUseCase(db *gorm.DB, logger *logrus.Logger, validate *validator.Validate,
-	transactionRepository *repository.TransactionRepository, courseRepository *repository.CourseRepository, userRepository *repository.UserRepository, voucherRepository *repository.VoucherRepository, midtransHelper *helper.MidtransClient) *TransactionUseCase {
+func NewTransactionUseCase(db *gorm.DB, logger *logrus.Logger, transactionRepository *repository.TransactionRepository,
+	courseRepository *repository.CourseRepository, userRepository *repository.UserRepository, voucherRepository *repository.VoucherRepository,
+	midtransHelper *helper.MidtransClient) *TransactionUseCase {
 	return &TransactionUseCase{
 		DB:                    db,
 		Log:                   logger,
-		Validate:              validate,
 		TransactionRepository: transactionRepository,
 		CourseRepository:      courseRepository,
 		UserRepository:        userRepository,
@@ -165,16 +163,11 @@ func (c *TransactionUseCase) GetByTrxID(ctx context.Context, trxID uuid.UUID) (*
 func (c *TransactionUseCase) UpdateTransactionStatus(ctx context.Context, request *model.UpdateTransactionStatus) error {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
-	err := c.Validate.Struct(request)
-	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
-		return fiber.ErrBadRequest
-	}
 
 	helper.SanitiseStruct(request)
 
 	transaction := new(entity.Transaction)
-	err = c.TransactionRepository.FindByTrxID(tx, transaction, request.TransactionID)
+	err := c.TransactionRepository.FindByTrxID(tx, transaction, request.TransactionID)
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, "transaction not found")
 	}

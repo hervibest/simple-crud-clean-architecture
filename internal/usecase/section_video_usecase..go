@@ -10,7 +10,6 @@ import (
 	"simple-crud-clean-architecture/internal/model/converter"
 	"simple-crud-clean-architecture/internal/repository"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -20,19 +19,16 @@ import (
 type SecVideoUseCase struct {
 	DB                      *gorm.DB
 	Log                     *logrus.Logger
-	Validate                *validator.Validate
 	CourseSectionRepository *repository.CourseSectionRepository
 	SectionVideoRepository  *repository.SectionVideoRepository
 	Minio                   *helper.Minio
 }
 
-func NewSecVideoUseCase(db *gorm.DB, logger *logrus.Logger, validate *validator.Validate,
-	courseSecRepository *repository.CourseSectionRepository, sectionVideoRepository *repository.SectionVideoRepository,
-	minio *helper.Minio) *SecVideoUseCase {
+func NewSecVideoUseCase(db *gorm.DB, logger *logrus.Logger, courseSecRepository *repository.CourseSectionRepository,
+	sectionVideoRepository *repository.SectionVideoRepository, minio *helper.Minio) *SecVideoUseCase {
 	return &SecVideoUseCase{
 		DB:                      db,
 		Log:                     logger,
-		Validate:                validate,
 		CourseSectionRepository: courseSecRepository,
 		SectionVideoRepository:  sectionVideoRepository,
 		Minio:                   minio,
@@ -40,11 +36,6 @@ func NewSecVideoUseCase(db *gorm.DB, logger *logrus.Logger, validate *validator.
 }
 
 func (c *SecVideoUseCase) Search(ctx context.Context, request *model.SearchSecVideosRequest) ([]model.SecVideoResponse, *model.PageMetadata, error) {
-
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.WithError(err).Error("error validating request body")
-		return nil, nil, fiber.ErrBadRequest
-	}
 
 	section := new(entity.CourseSection)
 	if err := c.CourseSectionRepository.FindByUUID(c.DB, section, request.SectionUUID); err != nil {
