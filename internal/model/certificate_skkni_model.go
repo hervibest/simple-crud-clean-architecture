@@ -34,11 +34,12 @@ type DeleteCertificateSkkniRequest struct {
 	CertificateSkkniUUID uuid.UUID `validate:"required"`
 }
 type CertificateSkkniResponse struct {
-	UUID      uuid.UUID `json:"uuid,omitempty"`
-	Name      string    `json:"name,omitempty"`
-	FileURL   string    `json:"file_url,omitempty"`
-	CreatedAt time.Time `json:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	UUID        uuid.UUID            `json:"uuid,omitempty"`
+	Name        string               `json:"name,omitempty"`
+	FileURL     string               `json:"file_url,omitempty"`
+	Certificate *CertificateResponse `json:"certificate,omitempty"`
+	CreatedAt   time.Time            `json:"created_at,omitempty"`
+	UpdatedAt   time.Time            `json:"updated_at,omitempty"`
 }
 
 type SkkniThumbnailRequest struct {

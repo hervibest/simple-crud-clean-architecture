@@ -35,7 +35,7 @@ func (r *CertifSkkniRepository) CountByNameAndNotID(db *gorm.DB, name string, ex
 	return total, err
 }
 
-func (r *CertifSkkniRepository) Search(db *gorm.DB, request *model.SearchCertificateMatRequest) ([]entity.Skkni, *model.PageMetadata, error) {
+func (r *CertifSkkniRepository) Search(db *gorm.DB, request *model.SearchCertificateSkkniRequest) ([]entity.Skkni, *model.PageMetadata, error) {
 	var certificateSkkni []entity.Skkni
 
 	var totalItems int64
@@ -45,6 +45,8 @@ func (r *CertifSkkniRepository) Search(db *gorm.DB, request *model.SearchCertifi
 
 	pageMetadata := helper.CalculatePagination(totalItems, request.Page, request.Size)
 
+	db = db.Preload("Certificate").Preload("File")
+
 	if err := db.Scopes(r.FilterSkkniSec(request)).Offset(pageMetadata.Offset).Limit(pageMetadata.Size).Find(&certificateSkkni).Error; err != nil {
 		return nil, nil, err
 	}
@@ -52,7 +54,7 @@ func (r *CertifSkkniRepository) Search(db *gorm.DB, request *model.SearchCertifi
 	return certificateSkkni, pageMetadata, nil
 }
 
-func (r *CertifSkkniRepository) FilterSkkniSec(request *model.SearchCertificateMatRequest) func(tx *gorm.DB) *gorm.DB {
+func (r *CertifSkkniRepository) FilterSkkniSec(request *model.SearchCertificateSkkniRequest) func(tx *gorm.DB) *gorm.DB {
 	return func(tx *gorm.DB) *gorm.DB {
 		tx = tx.Where("certificate_id = ?", request.CertificateID)
 
@@ -60,15 +62,14 @@ func (r *CertifSkkniRepository) FilterSkkniSec(request *model.SearchCertificateM
 			name = "%" + name + "%"
 			tx = tx.Where("name LIKE ?", name)
 		}
-		if code := request.Code; code != "" {
-			code = "%" + code + "%"
-			tx = tx.Where("code LIKE ?", code)
-		}
-
 		return tx
 	}
 }
 
 func (r *CertifSkkniRepository) AttachFile(db *gorm.DB, skkni *entity.Skkni, file *entity.File) error {
 	return db.Model(skkni).Association("File").Append(file)
+}
+
+func (r *CertifSkkniRepository) GetDetailByUUID(db *gorm.DB, skkni *entity.Skkni, uuid uuid.UUID) error {
+	return db.Joins("Certificate").Joins("File").Where("skkni.uuid = ?", uuid).Take(skkni).Error
 }

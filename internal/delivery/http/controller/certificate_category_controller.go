@@ -87,7 +87,7 @@ func (c *CertificateCatController) List(ctx *fiber.Ctx) error {
 }
 
 func (c *CertificateCatController) Get(ctx *fiber.Ctx) error {
-	parsedUUID, err := uuid.Parse(ctx.Params("CertificateCatID"))
+	parsedUUID, err := uuid.Parse(ctx.Params("certificateCatID"))
 	if err != nil {
 		c.Log.WithError(err).Error("error parsing Certificate category uuid")
 		return fiber.NewError(fiber.StatusBadRequest, "invalid Certificate category uuid")
@@ -126,7 +126,7 @@ func (c *CertificateCatController) Update(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	parsedUUID, err := uuid.Parse(ctx.Params("CertificateCatID"))
+	parsedUUID, err := uuid.Parse(ctx.Params("certificateCatID"))
 	if err != nil {
 		c.Log.WithError(err).Error("error parsing Certificate category uuid")
 		return fiber.NewError(fiber.StatusBadRequest, "invalid Certificate category uuid")

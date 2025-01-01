@@ -25,7 +25,6 @@ func NewCertificateController(useCase *usecase.CertificateUseCase, log *logrus.L
 }
 
 func (c *CertificateController) Create(ctx *fiber.Ctx) error {
-
 	request := new(model.CreateCertificateRequest)
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.WithError(err).Error("error parsing request body")

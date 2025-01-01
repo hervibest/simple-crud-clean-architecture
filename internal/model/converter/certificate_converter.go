@@ -25,6 +25,12 @@ func CertificateToResponse(certificate *entity.Certificate) *model.CertificateRe
 		URL = certificate.Thumbnail.Path
 	}
 
+	var categoryReponsePointer *model.CertificateCatResponse
+	if certificate.Category != nil {
+		categoryReponse := DTOCertificateCatToResponse(*certificate.Category)
+		categoryReponsePointer = &categoryReponse
+	}
+
 	return &model.CertificateResponse{
 		UUID:        certificate.UUID,
 		Name:        certificate.Name,
@@ -35,7 +41,7 @@ func CertificateToResponse(certificate *entity.Certificate) *model.CertificateRe
 		IsActive:    certificate.IsActive,
 		// Discount:     discountResponsePointer,
 		ThumbnailURL: URL,
-		Category:     DTOCertificateCatToResponse(certificate.CertificateCategory),
+		Category:     categoryReponsePointer,
 		CreatedAt:    certificate.CreatedAt,
 		UpdatedAt:    certificate.UpdatedAt,
 	}

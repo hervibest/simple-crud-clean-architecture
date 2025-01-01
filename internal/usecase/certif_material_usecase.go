@@ -96,12 +96,12 @@ func (c *CertifMaterialUseCase) Create(ctx context.Context, request *model.Creat
 	certifMaterial.CertificateID = certificate.ID
 
 	if err := c.CertifMaterialtionRepository.Create(tx, certifMaterial); err != nil {
-		c.Log.WithError(err).Error("error creating certificate")
+		c.Log.WithError(err).Error("error creating material")
 		return nil, fiber.ErrInternalServerError
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.WithError(err).Error("error creating certificate")
+		c.Log.WithError(err).Error("error creating material")
 		return nil, fiber.ErrInternalServerError
 	}
 

@@ -57,7 +57,7 @@ func (r *CertificateRepository) FindWithDetails(db *gorm.DB, uuid uuid.UUID, wit
 	return &certificate, err
 }
 
-func (r *CertificateRepository) Search(db *gorm.DB, request *model.SearchCertificateRequest, withCategories bool) ([]entity.Certificate, *model.PageMetadata, error) {
+func (r *CertificateRepository) Search(db *gorm.DB, request *model.SearchCertificateRequest, withCategory bool) ([]entity.Certificate, *model.PageMetadata, error) {
 	var certificates []entity.Certificate
 
 	var totalItems int64
@@ -69,8 +69,8 @@ func (r *CertificateRepository) Search(db *gorm.DB, request *model.SearchCertifi
 
 	query := db.Scopes(r.FilterCertificate(request))
 
-	if withCategories {
-		query = query.Preload("Categories")
+	if withCategory {
+		query = query.Preload("Category")
 	}
 
 	if err := query.Offset(pageMetadata.Offset).Limit(pageMetadata.Size).Find(&certificates).Error; err != nil {

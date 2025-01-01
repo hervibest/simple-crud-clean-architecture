@@ -61,26 +61,22 @@ func (c *CertificateUseCase) Create(ctx context.Context, request *model.CreateCe
 		Description: request.Description,
 	}
 
-	if err := c.CertificateRepository.Create(tx, certificate); err != nil {
-		c.Log.WithError(err).Error("error creating certificate")
-		return nil, fiber.ErrInternalServerError
-	}
-
 	if request.CategoryUUID != uuid.Nil {
 		certifCategory := new(entity.CertificateCategory)
 		if err := c.CertifCategoryRepository.FindByUUID(tx, certifCategory, request.CategoryUUID); err != nil {
 			c.Log.WithError(err).Error("error finding certificate categories UUIDs")
 			return nil, fiber.NewError(fiber.StatusBadRequest, "certificate categories UUIDs not valid")
 		}
+		certificate.Category = certifCategory
+	}
 
-		if err := c.CertificateRepository.AddCategory(tx, certificate, certifCategory); err != nil {
-			c.Log.WithError(err).Error("error clearing certificate categories")
-			return nil, fiber.ErrInternalServerError
-		}
+	if err := c.CertificateRepository.Create(tx, certificate); err != nil {
+		c.Log.WithError(err).Error("error creating certificates")
+		return nil, fiber.ErrInternalServerError
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.WithError(err).Error("error creating certificate")
+		c.Log.WithError(err).Error("error creating certificates")
 		return nil, fiber.ErrInternalServerError
 	}
 

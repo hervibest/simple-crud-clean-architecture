@@ -35,18 +35,18 @@ type UpdateCertificateRequest struct {
 }
 
 type CertificateResponse struct {
-	UUID         uuid.UUID              `json:"uuid,omitempty"`
-	Name         string                 `json:"name,omitempty"`
-	Slug         string                 `json:"slug,omitempty"`
-	Description  string                 `json:"description,omitempty"`
-	Price        float64                `json:"original_price,omitempty"`
-	FinalPrice   float64                `json:"final_price,omitempty"`
-	IsActive     bool                   `json:"is_active,omitempty"`
-	Category     CertificateCatResponse `json:"category,omitempty"`
-	ThumbnailURL string                 `json:"thumbnail_url,omitempty"`
-	Discount     *DiscountResponse      `json:"discount,omitempty"`
-	CreatedAt    time.Time              `json:"created_at,omitempty"`
-	UpdatedAt    time.Time              `json:"updated_at,omitempty"`
+	UUID         uuid.UUID               `json:"uuid,omitempty"`
+	Name         string                  `json:"name,omitempty"`
+	Slug         string                  `json:"slug,omitempty"`
+	Description  string                  `json:"descriptions,omitempty"`
+	Price        float64                 `json:"original_price,omitempty"`
+	FinalPrice   float64                 `json:"final_price,omitempty"`
+	IsActive     bool                    `json:"is_active,omitempty"`
+	Category     *CertificateCatResponse `json:"categoreis,omitempty"`
+	ThumbnailURL string                  `json:"thumbnail_url,omitempty"`
+	Discount     *DiscountResponse       `json:"discount,omitempty"`
+	CreatedAt    time.Time               `json:"created_at,omitempty"`
+	UpdatedAt    time.Time               `json:"updated_at,omitempty"`
 }
 
 type SearchCertificateRequest struct {

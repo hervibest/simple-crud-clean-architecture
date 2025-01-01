@@ -26,7 +26,7 @@ func NewCertifSkkniController(useCase *usecase.CertifSkkniUseCase, log *logrus.L
 
 func (c *CertifSkkniController) Create(ctx *fiber.Ctx) error {
 
-	request := new(model.CreateCertificateMatRequest)
+	request := new(model.CreateCertificateSkkniRequest)
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.WithError(err).Error("error parsing request body")
 		return fiber.ErrBadRequest
@@ -54,10 +54,8 @@ func (c *CertifSkkniController) Create(ctx *fiber.Ctx) error {
 
 func (c *CertifSkkniController) List(ctx *fiber.Ctx) error {
 
-	request := &model.SearchCertificateMatRequest{
+	request := &model.SearchCertificateSkkniRequest{
 		Name: ctx.Query("name", ""),
-		Code: ctx.Query("code", ""),
-		Type: ctx.Query("type", ""),
 		Page: ctx.QueryInt("page", 1),
 		Size: ctx.QueryInt("size", 10),
 	}
@@ -98,7 +96,7 @@ func (c *CertifSkkniController) Get(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	request := &model.GetCertificateMatRequest{
+	request := &model.GetCertificateSkkniRequest{
 		UUID: parsedUUID,
 	}
 
@@ -124,7 +122,7 @@ func (c *CertifSkkniController) Get(ctx *fiber.Ctx) error {
 
 func (c *CertifSkkniController) Update(ctx *fiber.Ctx) error {
 
-	request := new(model.UpdateCertificateMatRequest)
+	request := new(model.UpdateCertificateSkkniRequest)
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.WithError(err).Error("error parsing request body")
 		return fiber.ErrBadRequest
@@ -132,11 +130,11 @@ func (c *CertifSkkniController) Update(ctx *fiber.Ctx) error {
 
 	parsedUUID, err := uuid.Parse(ctx.Params("skkniId"))
 	if err != nil {
-		c.Log.WithError(err).Error("error parsing CertifSkkniRepository section uuid")
+		c.Log.WithError(err).Error("error parsing CertifSkkni Repository  uuid")
 		return fiber.ErrBadRequest
 	}
 
-	request.CertificateMatUUID = parsedUUID
+	request.CertificateSkkniUUID = parsedUUID
 
 	if validationErr := c.Validator.Validate(request); validationErr != nil {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
@@ -160,7 +158,7 @@ func (c *CertifSkkniController) Update(ctx *fiber.Ctx) error {
 
 func (c *CertifSkkniController) Delete(ctx *fiber.Ctx) error {
 
-	request := new(model.DeleteCertificateMatRequest)
+	request := new(model.DeleteCertificateSkkniRequest)
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.WithError(err).Error("error parsing request body")
 		return fiber.ErrBadRequest
@@ -172,7 +170,7 @@ func (c *CertifSkkniController) Delete(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	request.CertificateMatUUID = parsedUUID
+	request.CertificateSkkniUUID = parsedUUID
 
 	if validationErr := c.Validator.Validate(request); validationErr != nil {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
@@ -202,7 +200,7 @@ func (c *CertifSkkniController) UploadThumbnail(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	file, err := ctx.FormFile("file")
+	file, err := ctx.FormFile("thumbnail")
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "missing file: "+err.Error())
 	}

@@ -34,7 +34,7 @@ func NewCertifSkkniUseCase(db *gorm.DB, logger *logrus.Logger, certifSkkniReposi
 	}
 }
 
-func (c *CertifSkkniUseCase) Search(ctx context.Context, request *model.SearchCertificateMatRequest) ([]model.CertificateSkkniResponse, *model.PageMetadata, error) {
+func (c *CertifSkkniUseCase) Search(ctx context.Context, request *model.SearchCertificateSkkniRequest) ([]model.CertificateSkkniResponse, *model.PageMetadata, error) {
 
 	certificate := new(entity.Certificate)
 	if err := c.CertificateRepository.FindByUUID(c.DB, certificate, request.CertificateUUID); err != nil {
@@ -58,9 +58,9 @@ func (c *CertifSkkniUseCase) Search(ctx context.Context, request *model.SearchCe
 	return responses, pageMetadata, nil
 }
 
-func (c *CertifSkkniUseCase) Get(ctx context.Context, request *model.GetCertificateMatRequest) (*model.CertificateSkkniResponse, error) {
+func (c *CertifSkkniUseCase) Get(ctx context.Context, request *model.GetCertificateSkkniRequest) (*model.CertificateSkkniResponse, error) {
 	certifSkkni := new(entity.Skkni)
-	if err := c.CertifSkkniRepository.FindByUUID(c.DB, certifSkkni, request.UUID); err != nil {
+	if err := c.CertifSkkniRepository.GetDetailByUUID(c.DB, certifSkkni, request.UUID); err != nil {
 		c.Log.WithError(err).Error("error getting certificate")
 		return nil, fiber.ErrNotFound
 	}
@@ -68,7 +68,7 @@ func (c *CertifSkkniUseCase) Get(ctx context.Context, request *model.GetCertific
 	return converter.CertifSkkniToResponse(certifSkkni), nil
 }
 
-func (c *CertifSkkniUseCase) Create(ctx context.Context, request *model.CreateCertificateMatRequest) (*model.CertificateSkkniResponse, error) {
+func (c *CertifSkkniUseCase) Create(ctx context.Context, request *model.CreateCertificateSkkniRequest) (*model.CertificateSkkniResponse, error) {
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -111,7 +111,7 @@ func (c *CertifSkkniUseCase) Create(ctx context.Context, request *model.CreateCe
 
 }
 
-func (c *CertifSkkniUseCase) Update(ctx context.Context, request *model.UpdateCertificateMatRequest) (*model.CertificateSkkniResponse, error) {
+func (c *CertifSkkniUseCase) Update(ctx context.Context, request *model.UpdateCertificateSkkniRequest) (*model.CertificateSkkniResponse, error) {
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -125,12 +125,12 @@ func (c *CertifSkkniUseCase) Update(ctx context.Context, request *model.UpdateCe
 	}
 
 	certifSkkni := new(entity.Skkni)
-	if err := c.CertifSkkniRepository.FindByUUID(tx, certifSkkni, request.CertificateMatUUID); err != nil {
+	if err := c.CertifSkkniRepository.FindByUUID(tx, certifSkkni, request.CertificateSkkniUUID); err != nil {
 		c.Log.Warnf("Failed find certificate section from database : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
-	total, err := c.CertifSkkniRepository.CountByNameAndNotID(tx, request.Name, request.CertificateMatUUID)
+	total, err := c.CertifSkkniRepository.CountByNameAndNotID(tx, request.Name, request.CertificateSkkniUUID)
 	if err != nil {
 		c.Log.Warnf("Failed certificate user from database : %+v", err)
 		return nil, fiber.ErrInternalServerError
@@ -158,7 +158,7 @@ func (c *CertifSkkniUseCase) Update(ctx context.Context, request *model.UpdateCe
 
 }
 
-func (c *CertifSkkniUseCase) Delete(ctx context.Context, request *model.DeleteCertificateMatRequest) (*model.CertificateSkkniResponse, error) {
+func (c *CertifSkkniUseCase) Delete(ctx context.Context, request *model.DeleteCertificateSkkniRequest) (*model.CertificateSkkniResponse, error) {
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -173,7 +173,7 @@ func (c *CertifSkkniUseCase) Delete(ctx context.Context, request *model.DeleteCe
 	}
 
 	certifSkkni := new(entity.Skkni)
-	if err := c.CertifSkkniRepository.FindByUUID(tx, certifSkkni, request.CertificateMatUUID); err != nil {
+	if err := c.CertifSkkniRepository.FindByUUID(tx, certifSkkni, request.CertificateSkkniUUID); err != nil {
 		c.Log.Warnf("Failed find certificate section from database : %+v", err)
 		return nil, fiber.NewError(fiber.StatusBadRequest, "invalid certificate section uuid")
 	}

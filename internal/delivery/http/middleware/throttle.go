@@ -38,7 +38,7 @@ func (r *RedisRateLimiter) ThrottleByKey(key string) fiber.Handler {
 		res, _ := r.Limiter.Allow(ctx, fmt.Sprintf(RateRequest, key), redisrate.Limit{
 			Rate:   r.Rate,
 			Burst:  r.Burst,
-			Period: time.Duration(r.Period) * time.Minute,
+			Period: time.Duration(r.Period) * time.Second,
 		})
 		if res.Allowed <= 0 {
 			return fiber.NewError(fiber.StatusTooManyRequests, "Rate limit exceeded")
@@ -54,7 +54,7 @@ func (r *RedisRateLimiter) ThrottleByIp() fiber.Handler {
 		res, _ := r.Limiter.Allow(ctx, fmt.Sprintf(RateRequest, ip), redisrate.Limit{
 			Rate:   r.Rate,
 			Burst:  r.Burst,
-			Period: time.Duration(r.Period) * time.Minute,
+			Period: time.Duration(r.Period) * time.Second,
 		})
 		if res.Allowed <= 0 {
 			return fiber.NewError(fiber.StatusTooManyRequests, "Rate limit exceeded")
@@ -71,7 +71,7 @@ func (r *RedisRateLimiter) ThrottleByKeyAndIP(key string) fiber.Handler {
 		res, _ := r.Limiter.Allow(ctx, compositeKey, redisrate.Limit{
 			Rate:   r.Rate,
 			Burst:  r.Burst,
-			Period: time.Duration(r.Period) * time.Minute,
+			Period: time.Duration(r.Period) * time.Second,
 		})
 		if res.Allowed <= 0 {
 			return fiber.NewError(fiber.StatusTooManyRequests, "Rate limit exceeded")
