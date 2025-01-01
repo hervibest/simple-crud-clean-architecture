@@ -43,12 +43,6 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	// err := c.Validate.Struct(request)
-	// if err != nil {
-	// 	c.Log.Warnf("Invalid request body : %+v", err)
-	// 	return nil, fiber.NewError(fiber.StatusBadRequest, err.Error())
-	// }
-
 	helper.SanitiseStruct(request)
 
 	total, err := c.UserRepository.CountByEmail(tx, request.Email)
@@ -113,7 +107,7 @@ func (c *UserUseCase) RequestEmailVerification(ctx context.Context, email string
 		}
 	}
 
-	token := uuid.New().String()
+	token := uuid.NewString()
 	if err := c.UserRepository.CreateOrUpdateVerificationToken(tx, email, token); err != nil {
 		c.Log.Warnf("Failed to create verification token: %+v", err)
 		return fiber.ErrInternalServerError
@@ -159,6 +153,9 @@ func (c *UserUseCase) VerifyEmail(ctx context.Context, request *model.VerifyEmai
 		return fiber.ErrNotFound
 	}
 
+	/*Verification token expiration issue should be fixed !
+	using dependecy injection viper for getting envvars */
+
 	if time.Since(verificationToken.UpdatedAt) > 15*time.Minute {
 		c.Log.Warnf("Verification token expired")
 		return fiber.NewError(fiber.StatusUnauthorized, "verification token expired")
@@ -189,7 +186,7 @@ func (c *UserUseCase) RequestResetPassword(ctx context.Context, email string, ne
 		return fiber.NewError(fiber.StatusNotFound, "failed find user by email")
 	}
 
-	token := uuid.New().String()
+	token := uuid.NewString()
 	if err := c.UserRepository.CreateOrUpdateResetPasswordToken(tx, email, token); err != nil {
 		c.Log.Warnf("Failed to create reset password token: %+v", err)
 		return fiber.NewError(fiber.StatusBadRequest, "failed to create reset password token")

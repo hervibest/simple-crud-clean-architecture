@@ -205,7 +205,8 @@ func (c *CertifSkkniUseCase) UploadFile(ctx context.Context, file *multipart.Fil
 
 	upload, err := c.Minio.UploadFileToMinio(ctx, file, "file")
 	if err != nil {
-		return nil, err
+		c.Log.Warnf("Failed to upload skkni file to minio : %+v", err)
+		return nil, fiber.ErrInternalServerError
 	}
 
 	newThumbnailFile := &entity.File{
