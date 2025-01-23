@@ -11,16 +11,14 @@ import (
 )
 
 type CertificateController struct {
-	UseCase   *usecase.CertificateUseCase
-	Log       *logrus.Logger
-	Validator helper.CustomValidator
+	UseCase *usecase.CertificateUseCase
+	Log     *logrus.Logger
 }
 
-func NewCertificateController(useCase *usecase.CertificateUseCase, log *logrus.Logger, validator helper.CustomValidator) *CertificateController {
+func NewCertificateController(useCase *usecase.CertificateUseCase, log *logrus.Logger) *CertificateController {
 	return &CertificateController{
-		UseCase:   useCase,
-		Log:       log,
-		Validator: validator,
+		UseCase: useCase,
+		Log:     log,
 	}
 }
 
@@ -37,16 +35,14 @@ func (c *CertificateController) Create(ctx *fiber.Ctx) error {
 	}
 	request.CategoryUUID = id
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Create(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Create(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error creating certificate")
 		return err
 	}
@@ -67,16 +63,14 @@ func (c *CertificateController) List(ctx *fiber.Ctx) error {
 		Size:        ctx.QueryInt("size", 10),
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	responses, pageMetadata, err := c.UseCase.Search(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	responses, pageMetadata, err := c.UseCase.Search(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error searching certificate")
 		return err
 	}
@@ -102,16 +96,14 @@ func (c *CertificateController) Get(ctx *fiber.Ctx) error {
 		UUID: parsedUUID,
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Get(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Get(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error getting certificate")
 		return err
 	}
@@ -144,16 +136,15 @@ func (c *CertificateController) Update(ctx *fiber.Ctx) error {
 	}
 
 	request.CategoryUUID = id
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
-		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
-			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
-		})
-	}
 
 	response, err := c.UseCase.Update(ctx.UserContext(), request)
-	if err != nil {
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
+		})
+	} else if err != nil {
 		c.Log.WithError(err).Error("error updating certificate")
 		return err
 	}
@@ -186,16 +177,14 @@ func (c *CertificateController) UploadThumbnail(ctx *fiber.Ctx) error {
 		CertificateUUID: parsedCertificateUUID,
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.UploadThumbnail(ctx.UserContext(), file, request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.UploadThumbnail(ctx.UserContext(), file, request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error updating section video")
 		return err
 	}

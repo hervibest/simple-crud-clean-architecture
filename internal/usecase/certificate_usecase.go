@@ -23,20 +23,27 @@ type CertificateUseCase struct {
 	CertificateRepository    *repository.CertificateRepository
 	CertifCategoryRepository *repository.CertifCategoryRepository
 	Minio                    *helper.Minio
+	Validator                helper.CustomValidator
 }
 
 func NewCertificateUseCase(db *gorm.DB, logger *logrus.Logger, certificateRepository *repository.CertificateRepository,
-	certificateCatRepository *repository.CertifCategoryRepository, minio *helper.Minio) *CertificateUseCase {
+	certificateCatRepository *repository.CertifCategoryRepository, minio *helper.Minio, validator helper.CustomValidator) *CertificateUseCase {
 	return &CertificateUseCase{
 		DB:                       db,
 		Log:                      logger,
 		CertificateRepository:    certificateRepository,
 		CertifCategoryRepository: certificateCatRepository,
 		Minio:                    minio,
+		Validator:                validator,
 	}
 }
 
 func (c *CertificateUseCase) Create(ctx context.Context, request *model.CreateCertificateRequest) (*model.CertificateResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -84,6 +91,10 @@ func (c *CertificateUseCase) Create(ctx context.Context, request *model.CreateCe
 }
 
 func (c *CertificateUseCase) Search(ctx context.Context, request *model.SearchCertificateRequest) ([]model.CertificateResponse, *model.PageMetadata, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, nil, validationErr
+	}
 
 	certificates, pageMetadata, err := c.CertificateRepository.Search(c.DB, request, true)
 	if err != nil {
@@ -100,6 +111,10 @@ func (c *CertificateUseCase) Search(ctx context.Context, request *model.SearchCe
 }
 
 func (c *CertificateUseCase) Get(ctx context.Context, request *model.GetCertificateRequest) (*model.CertificateResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	certificate, err := c.CertificateRepository.FindWithDetails(c.DB, request.UUID, true, true)
 	if err != nil {
@@ -111,6 +126,10 @@ func (c *CertificateUseCase) Get(ctx context.Context, request *model.GetCertific
 }
 
 func (c *CertificateUseCase) Update(ctx context.Context, request *model.UpdateCertificateRequest) (*model.CertificateResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -173,6 +192,11 @@ func (c *CertificateUseCase) Update(ctx context.Context, request *model.UpdateCe
 }
 
 func (c *CertificateUseCase) UploadThumbnail(ctx context.Context, file *multipart.FileHeader, request *model.CertificateThumbnailRequest) (*model.CertificateResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 

@@ -20,18 +20,25 @@ type CourseCatUseCase struct {
 	DB                  *gorm.DB
 	Log                 *logrus.Logger
 	CourseCatRepository *repository.CourseCategoryRepository
+	Validator           helper.CustomValidator
 }
 
-func NewCourseCatUseCase(db *gorm.DB, logger *logrus.Logger,
-	courseCatRepository *repository.CourseCategoryRepository) *CourseCatUseCase {
+func NewCourseCatUseCase(db *gorm.DB, logger *logrus.Logger, courseCatRepository *repository.CourseCategoryRepository,
+	validator helper.CustomValidator) *CourseCatUseCase {
 	return &CourseCatUseCase{
 		DB:                  db,
 		Log:                 logger,
 		CourseCatRepository: courseCatRepository,
+		Validator:           validator,
 	}
 }
 
 func (c *CourseCatUseCase) Create(ctx context.Context, request *model.CreateCourseCatRequest) (*model.CourseCatResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -70,6 +77,11 @@ func (c *CourseCatUseCase) Create(ctx context.Context, request *model.CreateCour
 
 func (c *CourseCatUseCase) Search(ctx context.Context, request *model.SearchCourseCatRequest) ([]model.CourseCatResponse, *model.PageMetadata, error) {
 
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, nil, validationErr
+	}
+
 	courseCats, pageMetadata, err := c.CourseCatRepository.Search(c.DB, request)
 	if err != nil {
 		c.Log.WithError(err).Error("error getting course category")
@@ -85,6 +97,10 @@ func (c *CourseCatUseCase) Search(ctx context.Context, request *model.SearchCour
 }
 
 func (c *CourseCatUseCase) Get(ctx context.Context, request *model.GetCourseCatRequest) (*model.CourseCatResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	courseCategory := new(entity.CourseCategory)
 	if err := c.CourseCatRepository.FindByUUID(c.DB, courseCategory, request.UUID); err != nil {
@@ -96,6 +112,10 @@ func (c *CourseCatUseCase) Get(ctx context.Context, request *model.GetCourseCatR
 }
 
 func (c *CourseCatUseCase) Update(ctx context.Context, request *model.UpdateCourseCatRequest) (*model.CourseCatResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()

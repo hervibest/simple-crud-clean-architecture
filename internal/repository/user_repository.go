@@ -72,6 +72,10 @@ func (r *UserRepository) SetUserEmailValidated(db *gorm.DB, verificationToken *e
 	return nil
 }
 
+func (r *UserRepository) DeleteVerificationToken(db *gorm.DB, verificationToken *entity.VerificationToken) error {
+	return db.Model(verificationToken).Where("email = ? AND token = ?", verificationToken.UserEmail, verificationToken.Token).Delete(nil).Error
+}
+
 func (r *UserRepository) CreateOrUpdateResetPasswordToken(db *gorm.DB, email string, token string) error {
 	resetPasswordToken := entity.ResetPasswordToken{
 		UserEmail: email,

@@ -21,20 +21,29 @@ type CertifSkkniUseCase struct {
 	CertificateRepository *repository.CertificateRepository
 	CertifSkkniRepository *repository.CertifSkkniRepository
 	Minio                 *helper.Minio
+	Validator             helper.CustomValidator
 }
 
 func NewCertifSkkniUseCase(db *gorm.DB, logger *logrus.Logger, certifSkkniRepository *repository.CertifSkkniRepository,
-	certificateRepository *repository.CertificateRepository, minio *helper.Minio) *CertifSkkniUseCase {
+	certificateRepository *repository.CertificateRepository, minio *helper.Minio, validator helper.CustomValidator) *CertifSkkniUseCase {
 	return &CertifSkkniUseCase{
 		DB:                    db,
 		Log:                   logger,
 		CertificateRepository: certificateRepository,
 		CertifSkkniRepository: certifSkkniRepository,
 		Minio:                 minio,
+		Validator:             validator,
 	}
 }
 
 func (c *CertifSkkniUseCase) Search(ctx context.Context, request *model.SearchCertificateSkkniRequest) ([]model.CertificateSkkniResponse, *model.PageMetadata, error) {
+
+	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, nil, validationErr
+	}
 
 	certificate := new(entity.Certificate)
 	if err := c.CertificateRepository.FindByUUID(c.DB, certificate, request.CertificateUUID); err != nil {
@@ -59,6 +68,13 @@ func (c *CertifSkkniUseCase) Search(ctx context.Context, request *model.SearchCe
 }
 
 func (c *CertifSkkniUseCase) Get(ctx context.Context, request *model.GetCertificateSkkniRequest) (*model.CertificateSkkniResponse, error) {
+	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	certifSkkni := new(entity.Skkni)
 	if err := c.CertifSkkniRepository.GetDetailByUUID(c.DB, certifSkkni, request.UUID); err != nil {
 		c.Log.WithError(err).Error("error getting certificate")
@@ -69,11 +85,15 @@ func (c *CertifSkkniUseCase) Get(ctx context.Context, request *model.GetCertific
 }
 
 func (c *CertifSkkniUseCase) Create(ctx context.Context, request *model.CreateCertificateSkkniRequest) (*model.CertificateSkkniResponse, error) {
+	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
-
-	helper.SanitiseStruct(request)
 
 	total, err := c.CertifSkkniRepository.CountByName(tx, request.Name)
 	if err != nil {
@@ -113,10 +133,15 @@ func (c *CertifSkkniUseCase) Create(ctx context.Context, request *model.CreateCe
 
 func (c *CertifSkkniUseCase) Update(ctx context.Context, request *model.UpdateCertificateSkkniRequest) (*model.CertificateSkkniResponse, error) {
 
+	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
-
-	helper.SanitiseStruct(request)
 
 	certificate := new(entity.Certificate)
 	if err := c.CertificateRepository.FindByUUID(tx, certificate, request.CertificateUUID); err != nil {
@@ -160,10 +185,15 @@ func (c *CertifSkkniUseCase) Update(ctx context.Context, request *model.UpdateCe
 
 func (c *CertifSkkniUseCase) Delete(ctx context.Context, request *model.DeleteCertificateSkkniRequest) (*model.CertificateSkkniResponse, error) {
 
+	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
-
-	helper.SanitiseStruct(request)
 
 	certificate := new(entity.Certificate)
 	if err := c.CertificateRepository.FindByUUID(tx, certificate, request.CertificateUUID); err != nil {
@@ -192,10 +222,15 @@ func (c *CertifSkkniUseCase) Delete(ctx context.Context, request *model.DeleteCe
 }
 
 func (c *CertifSkkniUseCase) UploadFile(ctx context.Context, file *multipart.FileHeader, request *model.SkkniThumbnailRequest) (*model.CertificateSkkniResponse, error) {
+	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
-
-	helper.SanitiseStruct(request)
 
 	skkni := new(entity.Skkni)
 	if err := c.CertifSkkniRepository.FindByUUID(tx, skkni, request.SkkniUUID); err != nil {

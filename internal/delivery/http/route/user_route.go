@@ -10,7 +10,7 @@ func (c *RouteConfig) SetupUserRoute() {
 	userRoute.Get("/course", c.CourseController.ListUserPurchased)
 
 	transactionRoute := c.App.Group("/api/transaction", c.UserAuthMiddleware)
-	transactionRoute.Post("/buy", c.BuyableCourseMiddleware, c.TransactionController.Buy)
+	transactionRoute.Post("/buy", c.TransactionController.Buy)
 	transactionRoute.Get("/:trxId", c.TransactionController.GetTransaction)
 
 }

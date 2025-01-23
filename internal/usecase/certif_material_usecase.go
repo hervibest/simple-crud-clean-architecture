@@ -19,18 +19,27 @@ type CertifMaterialUseCase struct {
 	Log                          *logrus.Logger
 	CertificateRepository        *repository.CertificateRepository
 	CertifMaterialtionRepository *repository.CertifMaterialRepository
+	Validator                    helper.CustomValidator
 }
 
 func NewCertifMaterialUseCase(db *gorm.DB, logger *logrus.Logger, certifMaterialRepository *repository.CertifMaterialRepository,
-	certificateRepository *repository.CertificateRepository) *CertifMaterialUseCase {
+	certificateRepository *repository.CertificateRepository, validator helper.CustomValidator) *CertifMaterialUseCase {
 	return &CertifMaterialUseCase{
 		DB:                           db,
 		Log:                          logger,
 		CertificateRepository:        certificateRepository,
-		CertifMaterialtionRepository: certifMaterialRepository}
+		CertifMaterialtionRepository: certifMaterialRepository,
+		Validator:                    validator,
+	}
 }
 
 func (c *CertifMaterialUseCase) Search(ctx context.Context, request *model.SearchCertificateMatRequest) ([]model.CertificateMaterialResponse, *model.PageMetadata, error) {
+	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, nil, validationErr
+	}
 
 	certificate := new(entity.Certificate)
 	if err := c.CertificateRepository.FindByUUID(c.DB, certificate, request.CertificateUUID); err != nil {
@@ -55,6 +64,13 @@ func (c *CertifMaterialUseCase) Search(ctx context.Context, request *model.Searc
 }
 
 func (c *CertifMaterialUseCase) Get(ctx context.Context, request *model.GetCertificateMatRequest) (*model.CertificateMaterialResponse, error) {
+	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	certifMaterial := new(entity.Material)
 	if err := c.CertifMaterialtionRepository.FindByUUID(c.DB, certifMaterial, request.UUID); err != nil {
 		c.Log.WithError(err).Error("error getting certificate")
@@ -65,6 +81,13 @@ func (c *CertifMaterialUseCase) Get(ctx context.Context, request *model.GetCerti
 }
 
 func (c *CertifMaterialUseCase) Create(ctx context.Context, request *model.CreateCertificateMatRequest) (*model.CertificateMaterialResponse, error) {
+
+	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -110,6 +133,13 @@ func (c *CertifMaterialUseCase) Create(ctx context.Context, request *model.Creat
 }
 
 func (c *CertifMaterialUseCase) Update(ctx context.Context, request *model.UpdateCertificateMatRequest) (*model.CertificateMaterialResponse, error) {
+
+	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -159,6 +189,13 @@ func (c *CertifMaterialUseCase) Update(ctx context.Context, request *model.Updat
 }
 
 func (c *CertifMaterialUseCase) Delete(ctx context.Context, request *model.DeleteCertificateMatRequest) (*model.CertificateMaterialResponse, error) {
+
+	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()

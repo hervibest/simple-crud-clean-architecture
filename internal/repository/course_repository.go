@@ -104,7 +104,7 @@ func (r *CourseRepository) FilterCourse(request *model.SearchCourseRequest) func
 	}
 }
 
-func (r *CourseRepository) GetPurchasedCourseUUID(db *gorm.DB, userId int) ([]entity.Course, error) {
+func (r *CourseRepository) GetPurchasedCourseUUIDs(db *gorm.DB, userId int) ([]entity.Course, error) {
 	var courses []entity.Course
 
 	if err := db.Table("courses").

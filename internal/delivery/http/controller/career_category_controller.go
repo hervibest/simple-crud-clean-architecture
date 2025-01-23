@@ -11,16 +11,14 @@ import (
 )
 
 type CareerCatController struct {
-	UseCase   *usecase.CareerCatUseCase
-	Log       *logrus.Logger
-	Validator helper.CustomValidator
+	UseCase *usecase.CareerCatUseCase
+	Log     *logrus.Logger
 }
 
-func NewCareerCatController(useCase *usecase.CareerCatUseCase, log *logrus.Logger, validator helper.CustomValidator) *CareerCatController {
+func NewCareerCatController(useCase *usecase.CareerCatUseCase, log *logrus.Logger) *CareerCatController {
 	return &CareerCatController{
-		UseCase:   useCase,
-		Log:       log,
-		Validator: validator,
+		UseCase: useCase,
+		Log:     log,
 	}
 }
 
@@ -32,17 +30,15 @@ func (c *CareerCatController) Create(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Create(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Create(ctx.UserContext(), request)
-	if err != nil {
-		c.Log.WithError(err).Error("error creating career category")
+	} else if err != nil {
+		c.Log.WithError(err).Error("error when creating career category")
 		return err
 	}
 
@@ -62,17 +58,15 @@ func (c *CareerCatController) List(ctx *fiber.Ctx) error {
 		Size:        ctx.QueryInt("size", 10),
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	responses, pageMetadata, err := c.UseCase.Search(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	responses, pageMetadata, err := c.UseCase.Search(ctx.UserContext(), request)
-	if err != nil {
-		c.Log.WithError(err).Error("error searching career category")
+	} else if err != nil {
+		c.Log.WithError(err).Error("error when searching career categories")
 		return err
 	}
 
@@ -97,17 +91,15 @@ func (c *CareerCatController) Get(ctx *fiber.Ctx) error {
 		UUID: parsedUUID,
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Get(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Get(ctx.UserContext(), request)
-	if err != nil {
-		c.Log.WithError(err).Error("error getting career category")
+	} else if err != nil {
+		c.Log.WithError(err).Error("error when getting career category")
 		return err
 	}
 
@@ -138,17 +130,15 @@ func (c *CareerCatController) Update(ctx *fiber.Ctx) error {
 		Description: request.Description,
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Update(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Update(ctx.UserContext(), request)
-	if err != nil {
-		c.Log.WithError(err).Error("error updating career category")
+	} else if err != nil {
+		c.Log.WithError(err).Error("error when updating career category")
 		return err
 	}
 

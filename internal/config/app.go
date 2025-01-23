@@ -53,47 +53,47 @@ func Bootstrap(config *BootstrapConfig) {
 	certifSkkniRepository := repository.NewCertifSkkniRepository(config.Log)
 
 	// setup use cases
-	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, userRepository, config.Redis, config.TokenHelper, config.EmailHelper)
-	employeeUseCase := usecase.NewEmployeeUseCase(config.DB, config.Log, employeeRepository, config.Redis, config.TokenHelper, config.EmailHelper)
-	courseCatUseCase := usecase.NewCourseCatUseCase(config.DB, config.Log, courseCatRepository)
-	courseUseCase := usecase.NewCourseUseCase(config.DB, config.Log, courseRepository, courseCatRepository, config.MinioClient)
-	courseSecUseCase := usecase.NewCourseSecUseCase(config.DB, config.Log, courseSecRepository, courseRepository)
-	courseVidUseCase := usecase.NewSecVideoUseCase(config.DB, config.Log, courseSecRepository, courseVidRepository, config.MinioClient)
-	careerCatUseCase := usecase.NewCareerCatUseCase(config.DB, config.Log, careerCatRepository)
-	careerUseCase := usecase.NewCareerUseCase(config.DB, config.Log, careerRepository, careerCatRepository, config.MinioClient)
+	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, userRepository, config.Redis, config.TokenHelper, config.EmailHelper, config.CustomValidator)
+	employeeUseCase := usecase.NewEmployeeUseCase(config.DB, config.Log, employeeRepository, config.Redis, config.TokenHelper, config.EmailHelper, config.CustomValidator)
+	courseCatUseCase := usecase.NewCourseCatUseCase(config.DB, config.Log, courseCatRepository, config.CustomValidator)
+	courseUseCase := usecase.NewCourseUseCase(config.DB, config.Log, courseRepository, courseCatRepository, config.MinioClient, config.CustomValidator)
+	courseSecUseCase := usecase.NewCourseSecUseCase(config.DB, config.Log, courseSecRepository, courseRepository, config.CustomValidator)
+	courseVidUseCase := usecase.NewSecVideoUseCase(config.DB, config.Log, courseSecRepository, courseVidRepository, config.MinioClient, config.CustomValidator)
+	careerCatUseCase := usecase.NewCareerCatUseCase(config.DB, config.Log, careerCatRepository, config.CustomValidator)
+	careerUseCase := usecase.NewCareerUseCase(config.DB, config.Log, careerRepository, careerCatRepository, config.MinioClient, config.CustomValidator)
 
-	discountUseCase := usecase.NewDiscountUseCase(config.DB, config.Log, discountRepository, courseRepository)
-	voucherUseCase := usecase.NewVoucherUseCase(config.DB, config.Log, voucherRepository, courseRepository)
-	transactionUseCase := usecase.NewTransactionUseCase(config.DB, config.Log, transactionRepository, courseRepository, userRepository, voucherRepository, config.Midtrans)
+	discountUseCase := usecase.NewDiscountUseCase(config.DB, config.Log, discountRepository, courseRepository, config.CustomValidator)
+	voucherUseCase := usecase.NewVoucherUseCase(config.DB, config.Log, voucherRepository, courseRepository, config.CustomValidator)
+	transactionUseCase := usecase.NewTransactionUseCase(config.DB, config.Log, transactionRepository, courseRepository, userRepository, voucherRepository, config.Midtrans, config.CustomValidator)
 
-	certifCatUseCase := usecase.NewCertifCatUseCase(config.DB, config.Log, certifCatRepository)
-	certifUseCase := usecase.NewCertificateUseCase(config.DB, config.Log, certifiRepository, certifCatRepository, config.MinioClient)
-	certifMaterialUseCase := usecase.NewCertifMaterialUseCase(config.DB, config.Log, certifMaterialRepository, certifiRepository)
-	certifSkkniUseCase := usecase.NewCertifSkkniUseCase(config.DB, config.Log, certifSkkniRepository, certifiRepository, config.MinioClient)
+	certifCatUseCase := usecase.NewCertifCatUseCase(config.DB, config.Log, certifCatRepository, config.CustomValidator)
+	certifUseCase := usecase.NewCertificateUseCase(config.DB, config.Log, certifiRepository, certifCatRepository, config.MinioClient, config.CustomValidator)
+	certifMaterialUseCase := usecase.NewCertifMaterialUseCase(config.DB, config.Log, certifMaterialRepository, certifiRepository, config.CustomValidator)
+	certifSkkniUseCase := usecase.NewCertifSkkniUseCase(config.DB, config.Log, certifSkkniRepository, certifiRepository, config.MinioClient, config.CustomValidator)
 
 	// setup controller
-	userController := http.NewUserController(userUseCase, config.Log, config.CustomValidator)
-	employeeController := http.NewEmployeeController(employeeUseCase, config.Log, config.CustomValidator)
+	userController := http.NewUserController(userUseCase, config.Log)
+	employeeController := http.NewEmployeeController(employeeUseCase, config.Log)
 
-	courseCatController := http.NewCourseCatController(courseCatUseCase, config.Log, config.CustomValidator)
-	courseController := http.NewCourseController(courseUseCase, config.Log, config.CustomValidator)
-	courseSecController := http.NewCourseSecController(courseSecUseCase, config.Log, config.CustomValidator)
-	courseVidControler := http.NewSecVideoController(courseVidUseCase, config.Log, config.CustomValidator, config.MinioClient)
+	courseCatController := http.NewCourseCatController(courseCatUseCase, config.Log)
+	courseController := http.NewCourseController(courseUseCase, config.Log)
+	courseSecController := http.NewCourseSecController(courseSecUseCase, config.Log)
+	courseVidControler := http.NewSecVideoController(courseVidUseCase, config.Log, config.MinioClient)
 
-	careerCatController := http.NewCareerCatController(careerCatUseCase, config.Log, config.CustomValidator)
-	careerController := http.NewCareerController(careerUseCase, config.Log, config.CustomValidator)
+	careerCatController := http.NewCareerCatController(careerCatUseCase, config.Log)
+	careerController := http.NewCareerController(careerUseCase, config.Log)
 
-	discountController := http.NewDiscountController(discountUseCase, config.Log, config.CustomValidator)
-	voucherController := http.NewVoucherController(voucherUseCase, config.Log, config.CustomValidator)
-	transactionController := http.NewTransactionController(transactionUseCase, config.Log, config.Midtrans, config.CustomValidator)
+	discountController := http.NewDiscountController(discountUseCase, config.Log)
+	voucherController := http.NewVoucherController(voucherUseCase, config.Log)
+	transactionController := http.NewTransactionController(transactionUseCase, config.Log, config.Midtrans)
 
-	certifCatController := http.NewCertificateCatController(certifCatUseCase, config.Log, config.CustomValidator)
-	certifController := http.NewCertificateController(certifUseCase, config.Log, config.CustomValidator)
-	certifMatController := http.NewCertifMaterialController(certifMaterialUseCase, config.Log, config.CustomValidator)
-	certifSkkniController := http.NewCertifSkkniController(certifSkkniUseCase, config.Log, config.CustomValidator)
+	certifCatController := http.NewCertificateCatController(certifCatUseCase, config.Log)
+	certifController := http.NewCertificateController(certifUseCase, config.Log)
+	certifMatController := http.NewCertifMaterialController(certifMaterialUseCase, config.Log)
+	certifSkkniController := http.NewCertifSkkniController(certifSkkniUseCase, config.Log)
 
 	// upload controller
-	uploadController := http.NewUploadController(config.Log, config.CustomValidator, *config.MinioClient)
+	uploadController := http.NewUploadController(config.Log, *config.MinioClient)
 
 	// setup throttle
 	throttle := middleware.NewRedisRateLimiter(config.Redis, config.Config)

@@ -23,20 +23,27 @@ type CourseUseCase struct {
 	CourseRepository    *repository.CourseRepository
 	CourseCatRepository *repository.CourseCategoryRepository
 	Minio               *helper.Minio
+	Validator           helper.CustomValidator
 }
 
 func NewCourseUseCase(db *gorm.DB, logger *logrus.Logger, courseRepository *repository.CourseRepository,
-	courseCatRepository *repository.CourseCategoryRepository, minio *helper.Minio) *CourseUseCase {
+	courseCatRepository *repository.CourseCategoryRepository, minio *helper.Minio, validator helper.CustomValidator) *CourseUseCase {
 	return &CourseUseCase{
 		DB:                  db,
 		Log:                 logger,
 		CourseRepository:    courseRepository,
 		CourseCatRepository: courseCatRepository,
 		Minio:               minio,
+		Validator:           validator,
 	}
 }
 
 func (c *CourseUseCase) Create(ctx context.Context, request *model.CreateCourseRequest) (*model.CourseResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -93,6 +100,10 @@ func (c *CourseUseCase) Create(ctx context.Context, request *model.CreateCourseR
 }
 
 func (c *CourseUseCase) Search(ctx context.Context, request *model.SearchCourseRequest) ([]model.CourseResponse, *model.PageMetadata, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, nil, validationErr
+	}
 
 	courses, pageMetadata, err := c.CourseRepository.Search(c.DB, request, true)
 	if err != nil {
@@ -109,6 +120,10 @@ func (c *CourseUseCase) Search(ctx context.Context, request *model.SearchCourseR
 }
 
 func (c *CourseUseCase) Get(ctx context.Context, request *model.GetCourseRequest) (*model.CourseResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	course, err := c.CourseRepository.FindWithDetails(c.DB, request.UUID, true, true, true)
 	if err != nil {
@@ -120,6 +135,10 @@ func (c *CourseUseCase) Get(ctx context.Context, request *model.GetCourseRequest
 }
 
 func (c *CourseUseCase) Update(ctx context.Context, request *model.UpdateCourseRequest) (*model.CourseResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -186,9 +205,13 @@ func (c *CourseUseCase) Update(ctx context.Context, request *model.UpdateCourseR
 	return converter.CourseToResponse(course), nil
 }
 
-func (c *CourseUseCase) GetPurchasedCourseUUID(ctx context.Context, request *model.GetPurchasedCourseRequest) ([]model.CourseUUIDresponse, error) {
+func (c *CourseUseCase) GetPurchasedCourseUUIDs(ctx context.Context, request *model.GetPurchasedCourseRequest) ([]model.CourseUUIDresponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
-	courses, err := c.CourseRepository.GetPurchasedCourseUUID(c.DB, request.UserID)
+	courses, err := c.CourseRepository.GetPurchasedCourseUUIDs(c.DB, request.UserID)
 	if err != nil {
 		c.Log.WithError(err).Error("error getting user purchased course")
 		return nil, fiber.ErrNotFound
@@ -204,6 +227,10 @@ func (c *CourseUseCase) GetPurchasedCourseUUID(ctx context.Context, request *mod
 }
 
 func (c *CourseUseCase) UserGetPurchasedCourse(ctx context.Context, request *model.SearchCourseRequest, userID int) ([]model.CourseResponse, *model.PageMetadata, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, nil, validationErr
+	}
 
 	courses, pageMetadata, err := c.CourseRepository.UserGetPurchasedCourse(c.DB, request, userID)
 	if err != nil {
@@ -221,6 +248,11 @@ func (c *CourseUseCase) UserGetPurchasedCourse(ctx context.Context, request *mod
 }
 
 func (c *CourseUseCase) UploadThumbnail(ctx context.Context, file *multipart.FileHeader, request *model.CourseThumbnailRequest) (*model.CourseResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 

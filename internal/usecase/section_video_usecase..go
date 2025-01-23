@@ -22,20 +22,26 @@ type SecVideoUseCase struct {
 	CourseSectionRepository *repository.CourseSectionRepository
 	SectionVideoRepository  *repository.SectionVideoRepository
 	Minio                   *helper.Minio
+	Validator               helper.CustomValidator
 }
 
 func NewSecVideoUseCase(db *gorm.DB, logger *logrus.Logger, courseSecRepository *repository.CourseSectionRepository,
-	sectionVideoRepository *repository.SectionVideoRepository, minio *helper.Minio) *SecVideoUseCase {
+	sectionVideoRepository *repository.SectionVideoRepository, minio *helper.Minio, validator helper.CustomValidator) *SecVideoUseCase {
 	return &SecVideoUseCase{
 		DB:                      db,
 		Log:                     logger,
 		CourseSectionRepository: courseSecRepository,
 		SectionVideoRepository:  sectionVideoRepository,
 		Minio:                   minio,
+		Validator:               validator,
 	}
 }
 
 func (c *SecVideoUseCase) Search(ctx context.Context, request *model.SearchSecVideosRequest) ([]model.SecVideoResponse, *model.PageMetadata, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, nil, validationErr
+	}
 
 	section := new(entity.CourseSection)
 	if err := c.CourseSectionRepository.FindByUUID(c.DB, section, request.SectionUUID); err != nil {
@@ -60,6 +66,10 @@ func (c *SecVideoUseCase) Search(ctx context.Context, request *model.SearchSecVi
 }
 
 func (c *SecVideoUseCase) Get(ctx context.Context, request *model.GetSecVideoRequest) (*model.SecVideoResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	sectionVideo := new(entity.SectionVideo)
 	if err := c.SectionVideoRepository.FindByUUID(c.DB, sectionVideo, request.UUID); err != nil {
@@ -71,6 +81,11 @@ func (c *SecVideoUseCase) Get(ctx context.Context, request *model.GetSecVideoReq
 }
 
 func (c *SecVideoUseCase) Create(ctx context.Context, request *model.CreateSecVideoRequest) (*model.SecVideoResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -130,6 +145,11 @@ func (c *SecVideoUseCase) Create(ctx context.Context, request *model.CreateSecVi
 }
 
 func (c *SecVideoUseCase) Update(ctx context.Context, request *model.UpdateSecVideoRequest) (*model.SecVideoResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -208,6 +228,10 @@ func (c *SecVideoUseCase) Update(ctx context.Context, request *model.UpdateSecVi
 }
 
 func (c *SecVideoUseCase) Delete(ctx context.Context, request *model.DeleteSecVideoRequest) (*model.SecVideoResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -251,6 +275,11 @@ func (c *SecVideoUseCase) Delete(ctx context.Context, request *model.DeleteSecVi
 }
 
 func (c *SecVideoUseCase) UploadVideo(ctx context.Context, file *multipart.FileHeader, request *model.UploadVideoRequest) (*model.SecVideoResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -313,6 +342,7 @@ func (c *SecVideoUseCase) UploadVideo(ctx context.Context, file *multipart.FileH
 }
 
 func (c *SecVideoUseCase) EncodeVideos(ctx context.Context) error {
+
 	encodedVideoEntity, err := c.Minio.ProcessVideo(ctx, "internal/delivery/http/videos/file_example_MP4_1920_18MG.mp4", 1)
 	if err != nil {
 		return fmt.Errorf("failed to get unencoded videos: %w", err)

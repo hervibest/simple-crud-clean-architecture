@@ -9,10 +9,11 @@ import (
 )
 
 type CreateTransactionRequest struct {
-	UserID        int       `validator:"required"`
+	UserID        int       `validate:"required"`
+	Email         string    `validate:"required"`
 	CourseUUIDStr string    `json:"course_uuid"`
-	CourseUUID    uuid.UUID `validator:"required"`
-	VoucherCode   string    `json:"code"`
+	CourseUUID    uuid.UUID `validate:"required"`
+	VoucherCode   string    `json:"code" validate:"required"`
 }
 
 type MidtransSnapshotRequest struct {
@@ -26,12 +27,14 @@ type SnapshotTokenResponse struct {
 	Token         string `json:"token"`
 }
 
-type MidtransNotifyRequest struct {
+type UpdateTransactionWebhookRequest struct {
 	SignatureKey      string `json:"signature_key,omitempty"`
 	OrderID           string `json:"order_id,omitempty"`
 	StatusCode        string `json:"status_code,omitempty"`
 	GrossAmount       string `json:"gross_amount,omitempty"`
 	TransactionStatus string `json:"transaction_status,omitempty"`
+	ParsedOrderID     uuid.UUID
+	Body              []byte
 }
 
 type UpdateTransactionStatus struct {

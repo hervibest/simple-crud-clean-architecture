@@ -2,6 +2,9 @@ package usecase
 
 import (
 	"context"
+	"crypto/sha512"
+	"encoding/hex"
+	"encoding/json"
 	"simple-crud-clean-architecture/internal/entity"
 	"simple-crud-clean-architecture/internal/enum"
 	"simple-crud-clean-architecture/internal/helper"
@@ -25,11 +28,12 @@ type TransactionUseCase struct {
 	UserRepository        *repository.UserRepository
 	VoucherRepository     *repository.VoucherRepository
 	Midtrans              *helper.MidtransClient
+	Validator             helper.CustomValidator
 }
 
 func NewTransactionUseCase(db *gorm.DB, logger *logrus.Logger, transactionRepository *repository.TransactionRepository,
 	courseRepository *repository.CourseRepository, userRepository *repository.UserRepository, voucherRepository *repository.VoucherRepository,
-	midtransHelper *helper.MidtransClient) *TransactionUseCase {
+	midtransHelper *helper.MidtransClient, validator helper.CustomValidator) *TransactionUseCase {
 	return &TransactionUseCase{
 		DB:                    db,
 		Log:                   logger,
@@ -37,12 +41,17 @@ func NewTransactionUseCase(db *gorm.DB, logger *logrus.Logger, transactionReposi
 		CourseRepository:      courseRepository,
 		UserRepository:        userRepository,
 		VoucherRepository:     voucherRepository,
+		Validator:             validator,
 
 		Midtrans: midtransHelper,
 	}
 }
 
 func (c *TransactionUseCase) EmployeeSearch(ctx context.Context, request *model.SearchTransactionRequest) ([]model.TransactionResponse, *model.PageMetadata, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, nil, validationErr
+	}
 
 	transactions, pageMetadata, err := c.TransactionRepository.EmployeeSearch(c.DB, request)
 	if err != nil {
@@ -59,6 +68,7 @@ func (c *TransactionUseCase) EmployeeSearch(ctx context.Context, request *model.
 }
 
 func (c *TransactionUseCase) GetDetailTransaction(ctx context.Context, trxId uuid.UUID) (*model.TransactionResponse, error) {
+
 	transaction, err := c.TransactionRepository.GetTransactionWithDetails(c.DB, trxId)
 	if err != nil {
 		return nil, fiber.ErrNotFound
@@ -67,11 +77,22 @@ func (c *TransactionUseCase) GetDetailTransaction(ctx context.Context, trxId uui
 	return converter.TransactionToResponse(transaction), nil
 }
 
-func (c *TransactionUseCase) CreateTransaction(ctx context.Context, request *model.CreateTransactionRequest) (*entity.Transaction, error) {
+func (c *TransactionUseCase) CreateTransaction(ctx context.Context, request *model.CreateTransactionRequest) (*model.SnapshotTokenResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
 	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	course, err := c.CourseRepository.FindWithDetails(tx, request.CourseUUID, false, true, false)
 	if err != nil {
 		c.Log.WithError(err).Error("error finding course")
@@ -117,10 +138,16 @@ func (c *TransactionUseCase) CreateTransaction(ctx context.Context, request *mod
 		return nil, fiber.ErrInternalServerError
 	}
 
-	return transaction, nil
+	response, err := c.getPaymentTransactionToken(ctx, transaction, request.Email)
+	if err != nil {
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "error getting payment transaction token")
+	}
+
+	return response, nil
 }
 
-func (c *TransactionUseCase) GetPaymentTransactionToken(ctx context.Context, transaction *entity.Transaction, email string) (*model.SnapshotTokenResponse, error) {
+func (c *TransactionUseCase) getPaymentTransactionToken(ctx context.Context, transaction *entity.Transaction, email string) (*model.SnapshotTokenResponse, error) {
+
 	request := &model.MidtransSnapshotRequest{
 		OrderID:  transaction.TrxID.String(),
 		GrossAmt: int64(transaction.Amount),
@@ -149,18 +176,57 @@ func (c *TransactionUseCase) GetPaymentTransactionToken(ctx context.Context, tra
 	return converter.SnapToResponse(transaction.TrxID.String(), response), nil
 }
 
-func (c *TransactionUseCase) GetByTrxID(ctx context.Context, trxID uuid.UUID) (*entity.Transaction, error) {
-
-	transaction := &entity.Transaction{}
-	err := c.TransactionRepository.FindByTrxID(c.DB, transaction, trxID)
-	if err != nil {
-		return nil, fiber.ErrNotFound
+func (c *TransactionUseCase) UpdateTransactionWebhook(ctx context.Context, request *model.UpdateTransactionWebhookRequest) error {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return validationErr
 	}
 
-	return transaction, nil
+	transaction := &entity.Transaction{}
+	err := c.TransactionRepository.FindByTrxID(c.DB, transaction, request.ParsedOrderID)
+	if err != nil {
+		return fiber.ErrNotFound
+	}
+
+	signatureToCompare := transaction.TrxID.String() + request.StatusCode + request.GrossAmount + c.Midtrans.GetMidtransKey()
+
+	hash := sha512.New()
+	hash.Write([]byte(signatureToCompare))
+	hashedSignature := hex.EncodeToString(hash.Sum(nil))
+
+	requestIsValid := hashedSignature == request.SignatureKey
+	if !requestIsValid {
+		c.Log.Error("error invalid signature key")
+		return fiber.ErrForbidden
+	}
+	transactionStatus := enum.MidtransPaymentStatus(request.TransactionStatus)
+
+	if enum.PaymentStatusPending == transactionStatus {
+
+		return nil
+	}
+
+	updateRequest := &model.UpdateTransactionStatus{
+		TransactionID:            request.ParsedOrderID,
+		Status:                   transactionStatus,
+		ExternalCallbackResponse: json.RawMessage(request.Body),
+	}
+
+	err = c.updateTransactionStatus(ctx, updateRequest)
+	if err != nil {
+		c.Log.WithError(err).Error("error updating transaction status")
+		return err
+	}
+
+	return nil
 }
 
-func (c *TransactionUseCase) UpdateTransactionStatus(ctx context.Context, request *model.UpdateTransactionStatus) error {
+func (c *TransactionUseCase) updateTransactionStatus(ctx context.Context, request *model.UpdateTransactionStatus) error {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 

@@ -25,10 +25,12 @@ type EmployeeUseCase struct {
 	RedisClient        *redis.Client
 	TokenHelper        *helper.TokenHelper
 	EmailHelper        *helper.GomailSender
+	Validator          helper.CustomValidator
 }
 
 func NewEmployeeUseCase(db *gorm.DB, logger *logrus.Logger, employeeRepository *repository.EmployeeRepository,
-	redisClient *redis.Client, tokenHelper *helper.TokenHelper, emailHelper *helper.GomailSender) *EmployeeUseCase {
+	redisClient *redis.Client, tokenHelper *helper.TokenHelper, emailHelper *helper.GomailSender, validator helper.CustomValidator,
+) *EmployeeUseCase {
 	return &EmployeeUseCase{
 		DB:                 db,
 		Log:                logger,
@@ -36,10 +38,16 @@ func NewEmployeeUseCase(db *gorm.DB, logger *logrus.Logger, employeeRepository *
 		EmployeeRepository: employeeRepository,
 		TokenHelper:        tokenHelper,
 		EmailHelper:        emailHelper,
+		Validator:          validator,
 	}
 }
 
 func (c *EmployeeUseCase) Create(ctx context.Context, request *model.RegisterEmployeeRequest) (*model.EmployeeResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -82,6 +90,10 @@ func (c *EmployeeUseCase) Create(ctx context.Context, request *model.RegisterEmp
 }
 
 func (c *EmployeeUseCase) Login(ctx context.Context, request *model.LoginEmployeeRequest) (*model.EmployeeResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -114,6 +126,10 @@ func (c *EmployeeUseCase) Login(ctx context.Context, request *model.LoginEmploye
 }
 
 func (c *EmployeeUseCase) Verify(ctx context.Context, request *model.VerifyEmployeeRequest) (*model.Auth, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	accessTokenDetails, err := c.TokenHelper.VerifyEmployeeAccessToken(request.Token)
 	if err != nil {
@@ -138,6 +154,10 @@ func (c *EmployeeUseCase) Verify(ctx context.Context, request *model.VerifyEmplo
 }
 
 func (c *EmployeeUseCase) Current(ctx context.Context, request *model.GetEmployeeRequest) (*model.EmployeeResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	employee := new(entity.Employee)
 	if err := c.EmployeeRepository.FindByEmail(c.DB, employee, request.Email); err != nil {
@@ -149,6 +169,11 @@ func (c *EmployeeUseCase) Current(ctx context.Context, request *model.GetEmploye
 }
 
 func (c *EmployeeUseCase) Logout(ctx context.Context, request *model.LogoutEmployeeRequest) (bool, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return false, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 
 	defer tx.Rollback()

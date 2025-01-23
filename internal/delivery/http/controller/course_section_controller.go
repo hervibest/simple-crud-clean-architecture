@@ -11,16 +11,14 @@ import (
 )
 
 type CourseSectionController struct {
-	UseCase   *usecase.CourseSecUseCase
-	Log       *logrus.Logger
-	Validator helper.CustomValidator
+	UseCase *usecase.CourseSecUseCase
+	Log     *logrus.Logger
 }
 
-func NewCourseSecController(useCase *usecase.CourseSecUseCase, log *logrus.Logger, validator helper.CustomValidator) *CourseSectionController {
+func NewCourseSecController(useCase *usecase.CourseSecUseCase, log *logrus.Logger) *CourseSectionController {
 	return &CourseSectionController{
-		UseCase:   useCase,
-		Log:       log,
-		Validator: validator,
+		UseCase: useCase,
+		Log:     log,
 	}
 }
 
@@ -32,16 +30,14 @@ func (c *CourseSectionController) Create(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Create(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Create(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error creating course category")
 		return err
 	}
@@ -66,16 +62,14 @@ func (c *CourseSectionController) List(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	responses, pageMetadata, err := c.UseCase.Search(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	responses, pageMetadata, err := c.UseCase.Search(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error searching course sections")
 		return err
 	}
@@ -101,16 +95,14 @@ func (c *CourseSectionController) Get(ctx *fiber.Ctx) error {
 		UUID: parsedUUID,
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Get(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Get(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error getting contact")
 		return err
 	}
@@ -137,16 +129,14 @@ func (c *CourseSectionController) Update(ctx *fiber.Ctx) error {
 
 	request.CourseSecUUID = parsedUUID
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Update(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Update(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error updating course category")
 		return err
 	}
@@ -173,16 +163,14 @@ func (c *CourseSectionController) Delete(ctx *fiber.Ctx) error {
 
 	request.CourseSecUUID = parsedUUID
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Delete(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Delete(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error deleting course category")
 		return err
 	}

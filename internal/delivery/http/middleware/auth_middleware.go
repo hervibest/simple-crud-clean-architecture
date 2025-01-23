@@ -19,7 +19,7 @@ func NewUserAuth(userUseCase *usecase.UserUseCase, validator helper.CustomValida
 		}
 
 		request := &model.VerifyUserRequest{Token: token}
-		if validationErr := validator.Validate(request); validationErr != nil {
+		if validationErr := validator.ValidateUseCase(request); validationErr != nil {
 			return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 				Success: false,
 				Errors:  validationErr,
@@ -66,15 +66,15 @@ func NewBuyableCourse(courseUseCase *usecase.CourseUseCase, validator helper.Cus
 		purchasedRequest := new(model.GetPurchasedCourseRequest)
 		purchasedRequest.UserID = auth.Id
 
-		if validationErr := validator.Validate(request); validationErr != nil {
+		if validationErr := validator.ValidateUseCase(purchasedRequest); validationErr != nil {
 			return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 				Success: false,
 				Errors:  validationErr,
-				Message: "validation error",
+				Message: "validation errors",
 			})
 		}
 
-		courses, _ := courseUseCase.GetPurchasedCourseUUID(ctx.UserContext(), purchasedRequest)
+		courses, _ := courseUseCase.GetPurchasedCourseUUIDs(ctx.UserContext(), purchasedRequest)
 		for _, course := range courses {
 			if course.UUID == parsedUUID {
 				return fiber.NewError(fiber.StatusBadRequest, "course already purchased")

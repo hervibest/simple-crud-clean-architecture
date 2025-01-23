@@ -12,16 +12,14 @@ import (
 )
 
 type VoucherController struct {
-	UseCase   *usecase.VoucherUseCase
-	Log       *logrus.Logger
-	Validator helper.CustomValidator
+	UseCase *usecase.VoucherUseCase
+	Log     *logrus.Logger
 }
 
-func NewVoucherController(useCase *usecase.VoucherUseCase, log *logrus.Logger, validator helper.CustomValidator) *VoucherController {
+func NewVoucherController(useCase *usecase.VoucherUseCase, log *logrus.Logger) *VoucherController {
 	return &VoucherController{
-		UseCase:   useCase,
-		Log:       log,
-		Validator: validator,
+		UseCase: useCase,
+		Log:     log,
 	}
 }
 
@@ -48,14 +46,6 @@ func (c *VoucherController) Create(ctx *fiber.Ctx) error {
 	}
 	request.CourseUUIDs = courseUUIDs
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
-		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
-			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
-		})
-	}
-
 	validateRequest := &model.ValidateVoucherRequest{
 		UUID:          uuid.Nil,
 		Name:          request.Name,
@@ -67,7 +57,14 @@ func (c *VoucherController) Create(ctx *fiber.Ctx) error {
 		CourseUUIDs:   courseUUIDs,
 	}
 
-	if err := c.UseCase.Validate(ctx.UserContext(), validateRequest); err != nil {
+	err := c.UseCase.Validate(ctx.UserContext(), validateRequest)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
+		})
+	} else if err != nil {
 		c.Log.WithError(err).Error("error validating voucher")
 		return err
 	}
@@ -111,14 +108,6 @@ func (c *VoucherController) Update(ctx *fiber.Ctx) error {
 
 	request.CourseUUIDs = courseUUIDs
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
-		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
-			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
-		})
-	}
-
 	validateRequest := &model.ValidateVoucherRequest{
 		UUID:          request.UUID,
 		Name:          request.Name,
@@ -130,7 +119,14 @@ func (c *VoucherController) Update(ctx *fiber.Ctx) error {
 		CourseUUIDs:   request.CourseUUIDs,
 	}
 
-	if err := c.UseCase.Validate(ctx.UserContext(), validateRequest); err != nil {
+	err = c.UseCase.Validate(ctx.UserContext(), validateRequest)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
+		})
+	} else if err != nil {
 		c.Log.WithError(err).Error("error validating voucher")
 		return err
 	}
@@ -157,16 +153,14 @@ func (c *VoucherController) List(ctx *fiber.Ctx) error {
 		Size: ctx.QueryInt("size", 10),
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	responses, pageMetadata, err := c.UseCase.Search(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	responses, pageMetadata, err := c.UseCase.Search(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error searching course")
 		return err
 	}
@@ -192,16 +186,14 @@ func (c *VoucherController) Get(ctx *fiber.Ctx) error {
 		UUID: parsedUUID,
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Get(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Get(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error getting course")
 		return err
 	}
@@ -223,16 +215,14 @@ func (c *VoucherController) ApplyVoucher(ctx *fiber.Ctx) error {
 
 	request.VoucherCode = voucherCode
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.ApplyVoucher(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.ApplyVoucher(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error getting voucher")
 		return err
 	}

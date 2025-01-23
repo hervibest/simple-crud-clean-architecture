@@ -25,10 +25,11 @@ type UserUseCase struct {
 	RedisClient    *redis.Client
 	TokenHelper    *helper.TokenHelper
 	EmailHelper    *helper.GomailSender
+	Validator      helper.CustomValidator
 }
 
-func NewUserUseCase(db *gorm.DB, logger *logrus.Logger,
-	userRepository *repository.UserRepository, redisClient *redis.Client, tokenHelper *helper.TokenHelper, emailHelper *helper.GomailSender) *UserUseCase {
+func NewUserUseCase(db *gorm.DB, logger *logrus.Logger, userRepository *repository.UserRepository, redisClient *redis.Client,
+	tokenHelper *helper.TokenHelper, emailHelper *helper.GomailSender, validator helper.CustomValidator) *UserUseCase {
 	return &UserUseCase{
 		DB:             db,
 		Log:            logger,
@@ -36,10 +37,16 @@ func NewUserUseCase(db *gorm.DB, logger *logrus.Logger,
 		UserRepository: userRepository,
 		TokenHelper:    tokenHelper,
 		EmailHelper:    emailHelper,
+		Validator:      validator,
 	}
 }
 
 func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserRequest) (*model.UserResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -81,10 +88,20 @@ func (c *UserUseCase) Create(ctx context.Context, request *model.RegisterUserReq
 
 	c.Log.Infof("User with email: %+v successfully created their account", request.Email)
 
+	err = c.RequestEmailVerification(ctx, user.Email, true)
+	if err != nil {
+		c.Log.Warnf("Failed to register user : %+v", err)
+		return nil, err
+	}
+
 	return converter.UserToResponse(user), nil
 }
 
 func (c *UserUseCase) RequestEmailVerification(ctx context.Context, email string, newUser bool) error {
+	if email == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "email cannot be empty")
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -136,6 +153,11 @@ func (c *UserUseCase) RequestEmailVerification(ctx context.Context, email string
 }
 
 func (c *UserUseCase) VerifyEmail(ctx context.Context, request *model.VerifyEmailUserRequest) error {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 
 	helper.SanitiseStruct(request)
@@ -161,9 +183,22 @@ func (c *UserUseCase) VerifyEmail(ctx context.Context, request *model.VerifyEmai
 		return fiber.NewError(fiber.StatusUnauthorized, "verification token expired")
 	}
 
-	if err := c.UserRepository.SetUserEmailValidated(tx, verificationToken); err != nil {
-		c.Log.Warnf("Failed to set user email validated: %+v", err)
-		return fiber.ErrInternalServerError
+	user := new(entity.User)
+	if err := c.UserRepository.FindByEmail(tx, user, verificationToken.UserEmail); err != nil {
+		c.Log.Warnf("User not found")
+		return fiber.NewError(fiber.StatusNotFound, "user not found")
+	}
+
+	verifiedTime := time.Now()
+	user.VerifiedAt = &verifiedTime
+	if err := c.UserRepository.Update(tx, user); err != nil {
+		c.Log.Warnf("Failed to update verified user")
+		return fiber.NewError(fiber.StatusInternalServerError, "user not found")
+	}
+
+	if err := c.UserRepository.DeleteVerificationToken(tx, verificationToken); err != nil {
+		c.Log.Warnf("Failed to delete verified user")
+		return fiber.NewError(fiber.StatusInternalServerError, "user not found")
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -177,6 +212,11 @@ func (c *UserUseCase) VerifyEmail(ctx context.Context, request *model.VerifyEmai
 }
 
 func (c *UserUseCase) RequestResetPassword(ctx context.Context, email string, newUser bool) error {
+
+	if email == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "email cannot be empty")
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -215,6 +255,11 @@ func (c *UserUseCase) RequestResetPassword(ctx context.Context, email string, ne
 }
 
 func (c *UserUseCase) ValidateResetToken(ctx context.Context, request *model.ValidateResetTokenRequest) (bool, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return false, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 
 	decryptedToken, err := c.TokenHelper.Decrypt(request.Token)
@@ -239,6 +284,11 @@ func (c *UserUseCase) ValidateResetToken(ctx context.Context, request *model.Val
 }
 
 func (c *UserUseCase) ResetPassword(ctx context.Context, request *model.ResetPasswordUserRequest) error {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 
 	decryptedToken, err := c.TokenHelper.Decrypt(request.Token)
@@ -282,6 +332,10 @@ func (c *UserUseCase) ResetPassword(ctx context.Context, request *model.ResetPas
 }
 
 func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequest) (*model.UserResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -334,6 +388,10 @@ func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequest
 }
 
 func (c *UserUseCase) Current(ctx context.Context, request *model.GetUserRequest) (*model.UserResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	user := new(entity.User)
 	if err := c.UserRepository.FindByEmail(c.DB, user, request.Email); err != nil {
@@ -345,6 +403,10 @@ func (c *UserUseCase) Current(ctx context.Context, request *model.GetUserRequest
 }
 
 func (c *UserUseCase) Verify(ctx context.Context, request *model.VerifyUserRequest) (*model.Auth, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	accessTokenDetails, err := c.TokenHelper.VerifyAccessToken(request.Token)
 	if err != nil {
@@ -371,6 +433,11 @@ func (c *UserUseCase) Verify(ctx context.Context, request *model.VerifyUserReque
 }
 
 func (c *UserUseCase) Logout(ctx context.Context, request *model.LogoutUserRequest) (bool, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return false, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 
 	defer tx.Rollback()
@@ -402,6 +469,11 @@ func (c *UserUseCase) Logout(ctx context.Context, request *model.LogoutUserReque
 }
 
 func (c *UserUseCase) AccessTokenRequest(ctx context.Context, request *model.AccessTokenRequest) (*model.UserResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -454,6 +526,11 @@ func (c *UserUseCase) AccessTokenRequest(ctx context.Context, request *model.Acc
 }
 
 func (c *UserUseCase) Update(ctx context.Context, request *model.UpdateUserRequest) (*model.UserResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 

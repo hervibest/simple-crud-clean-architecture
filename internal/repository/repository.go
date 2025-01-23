@@ -1,12 +1,26 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type Repository[T any] struct {
 	DB *gorm.DB
+}
+
+func (r *Repository[T]) BeginTransaction(ctx context.Context) *gorm.DB {
+	return r.DB.WithContext(ctx).Begin()
+}
+
+func (r *Repository[T]) CommitTransaction(tx *gorm.DB) error {
+	return tx.Commit().Error
+}
+
+func (r *Repository[T]) Rollback(tx *gorm.DB) error {
+	return tx.Rollback().Error
 }
 
 func (r *Repository[T]) Create(db *gorm.DB, entity *T) error {

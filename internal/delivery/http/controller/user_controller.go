@@ -11,16 +11,14 @@ import (
 )
 
 type UserController struct {
-	Log       *logrus.Logger
-	UseCase   *usecase.UserUseCase
-	Validator helper.CustomValidator
+	Log     *logrus.Logger
+	UseCase *usecase.UserUseCase
 }
 
-func NewUserController(useCase *usecase.UserUseCase, logger *logrus.Logger, validator helper.CustomValidator) *UserController {
+func NewUserController(useCase *usecase.UserUseCase, logger *logrus.Logger) *UserController {
 	return &UserController{
-		Log:       logger,
-		UseCase:   useCase,
-		Validator: validator,
+		Log:     logger,
+		UseCase: useCase,
 	}
 }
 
@@ -33,22 +31,14 @@ func (c *UserController) Register(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Create(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Create(ctx.UserContext(), request)
-	if err != nil {
-		c.Log.Warnf("Failed to register user : %+v", err)
-		return err
-	}
-
-	err = c.UseCase.RequestEmailVerification(ctx.UserContext(), response.Email, true)
-	if err != nil {
+	} else if err != nil {
 		c.Log.Warnf("Failed to register user : %+v", err)
 		return err
 	}
@@ -73,17 +63,15 @@ func (c *UserController) VerifyEmail(ctx *fiber.Ctx) error {
 
 	request.Token = ctx.Params("token")
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	err = c.UseCase.VerifyEmail(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	err = c.UseCase.VerifyEmail(ctx.UserContext(), request)
-	if err != nil {
-		c.Log.Warnf("Failed to register user : %+v", err)
+	} else if err != nil {
+		c.Log.Warnf("Failed to verify user : %+v", err)
 		return err
 	}
 
@@ -108,16 +96,14 @@ func (c *UserController) RequestEmailVerification(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusTooManyRequests, "can't resend verification email more than once in 2 minutes")
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	err = c.UseCase.RequestEmailVerification(ctx.UserContext(), request.Email, false)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	err = c.UseCase.RequestEmailVerification(ctx.UserContext(), request.Email, false)
-	if err != nil {
+	} else if err != nil {
 		c.Log.Warnf("Failed to register user : %+v", err)
 		return err
 	}
@@ -141,16 +127,14 @@ func (c *UserController) RequestResetPassword(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusTooManyRequests, "can't resend reset password email more than once in 2 minutes")
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	err = c.UseCase.RequestResetPassword(ctx.UserContext(), request.Email, false)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	err = c.UseCase.RequestResetPassword(ctx.UserContext(), request.Email, false)
-	if err != nil {
+	} else if err != nil {
 		c.Log.Warnf("Failed to register user : %+v", err)
 		return err
 	}
@@ -168,16 +152,14 @@ func (c *UserController) ValidateResetToken(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	valid, err := c.UseCase.ValidateResetToken(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	valid, err := c.UseCase.ValidateResetToken(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.Warnf("Failed to validate reset token : %+v", err)
 		return err
 	}
@@ -200,16 +182,14 @@ func (c *UserController) ResetPassword(ctx *fiber.Ctx) error {
 	}
 	request.Token = ctx.Params("token")
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	err = c.UseCase.ResetPassword(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	err = c.UseCase.ResetPassword(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.Warnf("Failed to register user : %+v", err)
 		return err
 	}
@@ -227,16 +207,14 @@ func (c *UserController) Login(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Login(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Login(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.Warnf("Failed to login user : %+v", err)
 		return err
 	}
@@ -258,16 +236,14 @@ func (c *UserController) Current(ctx *fiber.Ctx) error {
 		Email: auth.Email,
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Current(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Current(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Warnf("Failed to get current user")
 		return err
 	}
@@ -290,16 +266,14 @@ func (c *UserController) RequestAccessToken(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.AccessTokenRequest(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.AccessTokenRequest(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.Warnf("Failed to login user : %+v", err)
 		return err
 	}
@@ -327,16 +301,14 @@ func (c *UserController) Logout(ctx *fiber.Ctx) error {
 	request.Email = auth.Email
 	request.AccessToken = auth.Token
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Logout(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Logout(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Warnf("Failed to logout user")
 		return err
 	}
@@ -362,16 +334,14 @@ func (c *UserController) Update(ctx *fiber.Ctx) error {
 
 	request.Email = auth.Email
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Update(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Update(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Warnf("Failed to update user")
 		return err
 	}

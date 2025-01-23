@@ -21,19 +21,26 @@ type VoucherUseCase struct {
 	Log               *logrus.Logger
 	VoucherRepository *repository.VoucherRepository
 	CourseRepository  *repository.CourseRepository
+	Validator         helper.CustomValidator
 }
 
 func NewVoucherUseCase(db *gorm.DB, logger *logrus.Logger, voucherRepository *repository.VoucherRepository,
-	courseRepository *repository.CourseRepository) *VoucherUseCase {
+	courseRepository *repository.CourseRepository, validator helper.CustomValidator) *VoucherUseCase {
 	return &VoucherUseCase{
 		DB:                db,
 		Log:               logger,
 		VoucherRepository: voucherRepository,
 		CourseRepository:  courseRepository,
+		Validator:         validator,
 	}
 }
 
 func (c *VoucherUseCase) Create(ctx context.Context, request *model.CreateVoucherRequest) (*model.VoucherResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -92,6 +99,10 @@ func (c *VoucherUseCase) Create(ctx context.Context, request *model.CreateVouche
 }
 
 func (c *VoucherUseCase) Validate(ctx context.Context, request *model.ValidateVoucherRequest) error {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return validationErr
+	}
 
 	helper.SanitiseStruct(request)
 
@@ -135,6 +146,10 @@ func (c *VoucherUseCase) Validate(ctx context.Context, request *model.ValidateVo
 }
 
 func (c *VoucherUseCase) Update(ctx context.Context, request *model.UpdateVoucherRequest) (*model.VoucherResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -203,6 +218,10 @@ func (c *VoucherUseCase) Update(ctx context.Context, request *model.UpdateVouche
 }
 
 func (c *VoucherUseCase) Search(ctx context.Context, request *model.SearchVoucherRequest) ([]model.VoucherResponse, *model.PageMetadata, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, nil, validationErr
+	}
 
 	courses, pageMetadata, err := c.VoucherRepository.Search(c.DB, request, true)
 	if err != nil {
@@ -219,6 +238,10 @@ func (c *VoucherUseCase) Search(ctx context.Context, request *model.SearchVouche
 }
 
 func (c *VoucherUseCase) Get(ctx context.Context, request *model.GetVoucherRequest) (*model.VoucherResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	course, err := c.VoucherRepository.FindWithDetails(c.DB, request.UUID, true, false)
 	if err != nil {
@@ -230,6 +253,10 @@ func (c *VoucherUseCase) Get(ctx context.Context, request *model.GetVoucherReque
 }
 
 func (c *VoucherUseCase) ApplyVoucher(ctx context.Context, request *model.ApplyVoucherRequest) (*model.VoucherResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	course := new(entity.Course)
 	if err := c.CourseRepository.FindByUUID(c.DB, course, request.CourseUUID); err != nil {
@@ -252,6 +279,7 @@ func (c *VoucherUseCase) ApplyVoucher(ctx context.Context, request *model.ApplyV
 }
 
 func (c *VoucherUseCase) ActivateVoucher(ctx context.Context) error {
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -271,6 +299,7 @@ func (c *VoucherUseCase) ActivateVoucher(ctx context.Context) error {
 }
 
 func (c *VoucherUseCase) DeactivateVoucher(ctx context.Context) error {
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 

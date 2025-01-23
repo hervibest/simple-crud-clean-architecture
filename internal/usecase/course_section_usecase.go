@@ -19,18 +19,25 @@ type CourseSecUseCase struct {
 	Log                     *logrus.Logger
 	CourseRepository        *repository.CourseRepository
 	CourseSectionRepository *repository.CourseSectionRepository
+	Validator               helper.CustomValidator
 }
 
-func NewCourseSecUseCase(db *gorm.DB, logger *logrus.Logger,
-	courseSecRepository *repository.CourseSectionRepository, courseRepository *repository.CourseRepository) *CourseSecUseCase {
+func NewCourseSecUseCase(db *gorm.DB, logger *logrus.Logger, courseSecRepository *repository.CourseSectionRepository,
+	courseRepository *repository.CourseRepository, validator helper.CustomValidator) *CourseSecUseCase {
 	return &CourseSecUseCase{
 		DB:                      db,
 		Log:                     logger,
 		CourseRepository:        courseRepository,
-		CourseSectionRepository: courseSecRepository}
+		CourseSectionRepository: courseSecRepository,
+		Validator:               validator,
+	}
 }
 
 func (c *CourseSecUseCase) Search(ctx context.Context, request *model.SearchCourseSecRequest) ([]model.CourseSectionResponse, *model.PageMetadata, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, nil, validationErr
+	}
 
 	course := new(entity.Course)
 	if err := c.CourseRepository.FindByUUID(c.DB, course, request.CourseUUID); err != nil {
@@ -55,6 +62,11 @@ func (c *CourseSecUseCase) Search(ctx context.Context, request *model.SearchCour
 }
 
 func (c *CourseSecUseCase) Get(ctx context.Context, request *model.GetCourseSecRequest) (*model.CourseSectionResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	courseSection := new(entity.CourseSection)
 	if err := c.CourseSectionRepository.FindByUUID(c.DB, courseSection, request.UUID); err != nil {
 		c.Log.WithError(err).Error("error getting course")
@@ -65,6 +77,10 @@ func (c *CourseSecUseCase) Get(ctx context.Context, request *model.GetCourseSecR
 }
 
 func (c *CourseSecUseCase) Create(ctx context.Context, request *model.CreateCourseSecRequest) (*model.CourseSectionResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -125,6 +141,10 @@ func (c *CourseSecUseCase) Create(ctx context.Context, request *model.CreateCour
 }
 
 func (c *CourseSecUseCase) Update(ctx context.Context, request *model.UpdateCourseSecRequest) (*model.CourseSectionResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -206,6 +226,10 @@ func (c *CourseSecUseCase) Update(ctx context.Context, request *model.UpdateCour
 }
 
 func (c *CourseSecUseCase) Delete(ctx context.Context, request *model.DeleteCourseSecRequest) (*model.CourseSectionResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -216,7 +240,6 @@ func (c *CourseSecUseCase) Delete(ctx context.Context, request *model.DeleteCour
 	if err := c.CourseRepository.FindByUUID(tx, course, request.CourseUUID); err != nil {
 		c.Log.Warnf("Failed find course from database : %+v", err)
 		return nil, fiber.NewError(fiber.StatusBadRequest, "invalid course uuid")
-
 	}
 
 	courseSection := new(entity.CourseSection)

@@ -42,7 +42,7 @@ type CertificateResponse struct {
 	Price        float64                 `json:"original_price,omitempty"`
 	FinalPrice   float64                 `json:"final_price,omitempty"`
 	IsActive     bool                    `json:"is_active,omitempty"`
-	Category     *CertificateCatResponse `json:"categoreis,omitempty"`
+	Category     *CertificateCatResponse `json:"categories,omitempty"`
 	ThumbnailURL string                  `json:"thumbnail_url,omitempty"`
 	Discount     *DiscountResponse       `json:"discount,omitempty"`
 	CreatedAt    time.Time               `json:"created_at,omitempty"`

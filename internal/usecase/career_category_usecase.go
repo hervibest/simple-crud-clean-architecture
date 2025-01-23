@@ -20,13 +20,15 @@ type CareerCatUseCase struct {
 	DB                  *gorm.DB
 	Log                 *logrus.Logger
 	CareerCatRepository *repository.CareerCategoryRepository
+	Validator           helper.CustomValidator
 }
 
-func NewCareerCatUseCase(db *gorm.DB, logger *logrus.Logger, careerCatRepository *repository.CareerCategoryRepository) *CareerCatUseCase {
+func NewCareerCatUseCase(db *gorm.DB, logger *logrus.Logger, careerCatRepository *repository.CareerCategoryRepository, validator helper.CustomValidator) *CareerCatUseCase {
 	return &CareerCatUseCase{
 		DB:                  db,
 		Log:                 logger,
 		CareerCatRepository: careerCatRepository,
+		Validator:           validator,
 	}
 }
 
@@ -35,6 +37,11 @@ func (c *CareerCatUseCase) Create(ctx context.Context, request *model.CreateCare
 	defer tx.Rollback()
 
 	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	total, err := c.CareerCatRepository.CountByName(tx, request.Name)
 	if err != nil {
@@ -69,6 +76,13 @@ func (c *CareerCatUseCase) Create(ctx context.Context, request *model.CreateCare
 
 func (c *CareerCatUseCase) Search(ctx context.Context, request *model.SearchCareerCatRequest) ([]model.CareerCatResponse, *model.PageMetadata, error) {
 
+	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, nil, validationErr
+	}
+
 	careerCats, pageMetadata, err := c.CareerCatRepository.Search(c.DB, request)
 	if err != nil {
 		c.Log.WithError(err).Error("error getting career category")
@@ -85,6 +99,13 @@ func (c *CareerCatUseCase) Search(ctx context.Context, request *model.SearchCare
 
 func (c *CareerCatUseCase) Get(ctx context.Context, request *model.GetCareerCatRequest) (*model.CareerCatResponse, error) {
 
+	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	careerCategory := new(entity.CareerCategory)
 	if err := c.CareerCatRepository.FindByUUID(c.DB, careerCategory, request.UUID); err != nil {
 		c.Log.WithError(err).Error("error getting careerCategory")
@@ -95,6 +116,13 @@ func (c *CareerCatUseCase) Get(ctx context.Context, request *model.GetCareerCatR
 }
 
 func (c *CareerCatUseCase) Update(ctx context.Context, request *model.UpdateCareerCatRequest) (*model.CareerCatResponse, error) {
+
+	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()

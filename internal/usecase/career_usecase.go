@@ -23,24 +23,32 @@ type CareerUseCase struct {
 	CareerRepository    *repository.CareerRepository
 	CareerCatRepository *repository.CareerCategoryRepository
 	Minio               *helper.Minio
+	Validator           helper.CustomValidator
 }
 
 func NewCareerUseCase(db *gorm.DB, logger *logrus.Logger, careerRepository *repository.CareerRepository,
-	careerCatRepository *repository.CareerCategoryRepository, minio *helper.Minio) *CareerUseCase {
+	careerCatRepository *repository.CareerCategoryRepository, minio *helper.Minio, validator helper.CustomValidator) *CareerUseCase {
 	return &CareerUseCase{
 		DB:                  db,
 		Log:                 logger,
 		CareerRepository:    careerRepository,
 		CareerCatRepository: careerCatRepository,
 		Minio:               minio,
+		Validator:           validator,
 	}
 }
 
 func (c *CareerUseCase) Create(ctx context.Context, request *model.CreateCareerRequest) (*model.CareerResponse, error) {
-	tx := c.DB.WithContext(ctx).Begin()
-	defer tx.Rollback()
 
 	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
 
 	total, err := c.CareerRepository.CountByName(tx, request.Title)
 	if err != nil {
@@ -94,6 +102,13 @@ func (c *CareerUseCase) Create(ctx context.Context, request *model.CreateCareerR
 
 func (c *CareerUseCase) Search(ctx context.Context, request *model.SearchCareerRequest) ([]model.CareerResponse, *model.PageMetadata, error) {
 
+	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, nil, validationErr
+	}
+
 	careers, pageMetadata, err := c.CareerRepository.Search(c.DB, request, true)
 	if err != nil {
 		c.Log.WithError(err).Error("error getting career category")
@@ -109,6 +124,12 @@ func (c *CareerUseCase) Search(ctx context.Context, request *model.SearchCareerR
 }
 
 func (c *CareerUseCase) Get(ctx context.Context, request *model.GetCareerRequest) (*model.CareerResponse, error) {
+	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	career, err := c.CareerRepository.FindWithDetails(c.DB, request.UUID, true, true, true)
 	if err != nil {
@@ -120,6 +141,13 @@ func (c *CareerUseCase) Get(ctx context.Context, request *model.GetCareerRequest
 }
 
 func (c *CareerUseCase) Update(ctx context.Context, request *model.UpdateCareerRequest) (*model.CareerResponse, error) {
+
+	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -187,6 +215,13 @@ func (c *CareerUseCase) Update(ctx context.Context, request *model.UpdateCareerR
 }
 
 func (c *CareerUseCase) UploadThumbnail(ctx context.Context, file *multipart.FileHeader, request *model.CareerThumbnailRequest) (*model.CareerResponse, error) {
+	helper.SanitiseStruct(request)
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 

@@ -1,11 +1,7 @@
 package http
 
 import (
-	"crypto/sha512"
-	"encoding/hex"
-	"encoding/json"
 	"simple-crud-clean-architecture/internal/delivery/http/middleware"
-	"simple-crud-clean-architecture/internal/enum"
 	"simple-crud-clean-architecture/internal/helper"
 	"simple-crud-clean-architecture/internal/model"
 	"simple-crud-clean-architecture/internal/usecase"
@@ -17,18 +13,16 @@ import (
 )
 
 type TransactionController struct {
-	Log       *logrus.Logger
-	UseCase   *usecase.TransactionUseCase
-	Midtrans  *helper.MidtransClient
-	Validator helper.CustomValidator
+	Log      *logrus.Logger
+	UseCase  *usecase.TransactionUseCase
+	Midtrans *helper.MidtransClient
 }
 
-func NewTransactionController(useCase *usecase.TransactionUseCase, log *logrus.Logger, midtransHelper *helper.MidtransClient, validator helper.CustomValidator) *TransactionController {
+func NewTransactionController(useCase *usecase.TransactionUseCase, log *logrus.Logger, midtransHelper *helper.MidtransClient) *TransactionController {
 	return &TransactionController{
-		UseCase:   useCase,
-		Log:       log,
-		Midtrans:  midtransHelper,
-		Validator: validator,
+		UseCase:  useCase,
+		Log:      log,
+		Midtrans: midtransHelper,
 	}
 }
 
@@ -50,16 +44,14 @@ func (c *TransactionController) List(ctx *fiber.Ctx) error {
 		Size:        ctx.QueryInt("size", 10),
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	responses, pageMetadata, err := c.UseCase.EmployeeSearch(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	responses, pageMetadata, err := c.UseCase.EmployeeSearch(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error searching course")
 		return err
 	}
@@ -105,30 +97,23 @@ func (c *TransactionController) Buy(ctx *fiber.Ctx) error {
 	parsedUUID, err := uuid.Parse(request.CourseUUIDStr)
 	if err != nil {
 		c.Log.WithError(err).Error("error parsing course UUID")
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid course UUID")
+		return fiber.NewError(fiber.StatusBadRequest, "invalid course UUID")
 	}
 
 	request.CourseUUID = parsedUUID
 	request.UserID = auth.Id
+	request.Email = auth.Email
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.CreateTransaction(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	transaction, err := c.UseCase.CreateTransaction(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error creating transaction")
 		return err
-	}
-
-	email := auth.Email
-	response, err := c.UseCase.GetPaymentTransactionToken(ctx.UserContext(), transaction, email)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "error getting payment transaction token")
 	}
 
 	return ctx.JSON(model.DataResponse[*model.SnapshotTokenResponse]{
@@ -139,7 +124,7 @@ func (c *TransactionController) Buy(ctx *fiber.Ctx) error {
 
 func (c *TransactionController) Notify(ctx *fiber.Ctx) error {
 
-	request := new(model.MidtransNotifyRequest)
+	request := new(model.UpdateTransactionWebhookRequest)
 	if err := ctx.BodyParser(request); err != nil {
 		c.Log.WithError(err).Error("error parsing request body")
 		return fiber.ErrBadRequest
@@ -148,46 +133,22 @@ func (c *TransactionController) Notify(ctx *fiber.Ctx) error {
 	helper.SanitiseStruct(request)
 
 	parsedOrderID, err := uuid.Parse(request.OrderID)
-
-	transaction, err := c.UseCase.GetByTrxID(ctx.UserContext(), parsedOrderID)
 	if err != nil {
-		c.Log.WithError(err).Error("error transaction not found")
-		return fiber.ErrNotFound
+		return fiber.NewError(fiber.StatusBadRequest, "invalid uuid")
 	}
 
-	signatureToCompare := transaction.TrxID.String() + request.StatusCode + request.GrossAmount + c.Midtrans.GetMidtransKey()
+	request.ParsedOrderID = parsedOrderID
+	request.Body = ctx.Body()
 
-	hash := sha512.New()
-	hash.Write([]byte(signatureToCompare))
-	hashedSignature := hex.EncodeToString(hash.Sum(nil))
-
-	requestIsValid := hashedSignature == request.SignatureKey
-	if !requestIsValid {
-		c.Log.Error("error invalid signature key")
-		return fiber.ErrForbidden
-	}
-	transactionStatus := enum.MidtransPaymentStatus(request.TransactionStatus)
-
-	if enum.PaymentStatusPending == transactionStatus {
-		return ctx.JSON(model.WebResponse{
-			Success: true,
+	err = c.UseCase.UpdateTransactionWebhook(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
+			Success: false,
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
+
 	}
-
-	body := ctx.Body()
-
-	updateRequest := &model.UpdateTransactionStatus{
-		TransactionID:            parsedOrderID,
-		Status:                   transactionStatus,
-		ExternalCallbackResponse: json.RawMessage(body),
-	}
-
-	err = c.UseCase.UpdateTransactionStatus(ctx.UserContext(), updateRequest)
-	if err != nil {
-		c.Log.WithError(err).Error("error updating transaction status")
-		return err
-	}
-
 	return ctx.JSON(model.DataResponse[*model.TransactionResponse]{
 		Success: true,
 	})

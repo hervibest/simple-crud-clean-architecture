@@ -8,7 +8,7 @@ import (
 )
 
 type CustomValidator interface {
-	Validate(any) []ValidationError
+	ValidateUseCase(payload any) *UseCaseValError
 }
 
 type customValidator struct {
@@ -26,23 +26,6 @@ type ValidationError struct {
 	Message string `json:"message"`
 }
 
-func (cv *customValidator) Validate(payload any) []ValidationError {
-	var validationErrors []ValidationError
-
-	err := cv.Validator.Struct(payload)
-	if err != nil {
-		for _, err := range err.(validator.ValidationErrors) {
-			validationErrors = append(validationErrors, ValidationError{
-				Field:   err.Field(),
-				Rule:    err.Tag(),
-				Message: getErrorMessage(err),
-			})
-		}
-	}
-
-	return validationErrors
-}
-
 func getErrorMessage(err validator.FieldError) string {
 	switch err.Tag() {
 	case "required":
@@ -54,4 +37,38 @@ func getErrorMessage(err validator.FieldError) string {
 	default:
 		return fmt.Sprintf("%s is invalid", err.Field())
 	}
+}
+
+type UseCaseValError struct {
+	ValidationErros []ValidationError
+	ErrorType       string
+}
+
+func (cv *customValidator) ValidateUseCase(payload any) *UseCaseValError {
+	var validationErrors []ValidationError
+
+	err := cv.Validator.Struct(payload)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			validationErrors = append(validationErrors, ValidationError{
+				Field:   err.Field(),
+				Rule:    err.Tag(),
+				Message: getErrorMessage(err),
+			})
+		}
+
+		return &UseCaseValError{
+			ValidationErros: validationErrors,
+			ErrorType:       "validation error",
+		}
+	}
+	return nil
+}
+
+func (e *UseCaseValError) Error() string {
+	return (fmt.Sprintf(e.ErrorType))
+}
+
+func (e *UseCaseValError) GetValidationErrors() []ValidationError {
+	return e.ValidationErros
 }

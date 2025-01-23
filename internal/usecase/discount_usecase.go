@@ -21,19 +21,26 @@ type DiscountUseCase struct {
 	Log                *logrus.Logger
 	DiscountRepository *repository.DiscountRepository
 	CourseRepository   *repository.CourseRepository
+	Validator          helper.CustomValidator
 }
 
 func NewDiscountUseCase(db *gorm.DB, logger *logrus.Logger, discountRepository *repository.DiscountRepository,
-	courseRepository *repository.CourseRepository) *DiscountUseCase {
+	courseRepository *repository.CourseRepository, validator helper.CustomValidator) *DiscountUseCase {
 	return &DiscountUseCase{
 		DB:                 db,
 		Log:                logger,
 		DiscountRepository: discountRepository,
 		CourseRepository:   courseRepository,
+		Validator:          validator,
 	}
 }
 
 func (c *DiscountUseCase) Create(ctx context.Context, request *model.CreateDiscountRequest) (*model.DiscountResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -91,19 +98,25 @@ func (c *DiscountUseCase) Create(ctx context.Context, request *model.CreateDisco
 }
 
 func (c *DiscountUseCase) Validate(ctx context.Context, request *model.ValidateDiscountRequest) error {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return validationErr
+	}
 
 	helper.SanitiseStruct(request)
 
-	if request.UUID != uuid.Nil {
-		discount := new(entity.Discount)
-		if err := c.DiscountRepository.FindByUUID(c.DB, discount, request.UUID); err != nil {
-			c.Log.Warnf("Failed discount user from database : %+v", err)
-			return fiber.ErrInternalServerError
-		}
+	if request.UUID == uuid.Nil {
+		return fiber.NewError(fiber.StatusBadGateway, "uuid should not be empty")
+	}
 
-		if discount.IsActive {
-			return fiber.NewError(fiber.StatusBadRequest, "current valid and active discount cannot be update")
-		}
+	discount := new(entity.Discount)
+	if err := c.DiscountRepository.FindByUUID(c.DB, discount, request.UUID); err != nil {
+		c.Log.Warnf("Failed discount user from database : %+v", err)
+		return fiber.ErrInternalServerError
+	}
+
+	if discount.IsActive {
+		return fiber.NewError(fiber.StatusBadRequest, "current valid and active discount cannot be update")
 	}
 
 	courses, err := c.CourseRepository.FindManyByUUIDs(c.DB, request.CourseUUIDs)
@@ -134,6 +147,10 @@ func (c *DiscountUseCase) Validate(ctx context.Context, request *model.ValidateD
 }
 
 func (c *DiscountUseCase) Update(ctx context.Context, request *model.UpdateDiscountRequest) (*model.DiscountResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
@@ -201,6 +218,10 @@ func (c *DiscountUseCase) Update(ctx context.Context, request *model.UpdateDisco
 }
 
 func (c *DiscountUseCase) Search(ctx context.Context, request *model.SearchDiscountRequest) ([]model.DiscountResponse, *model.PageMetadata, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, nil, validationErr
+	}
 
 	courses, pageMetadata, err := c.DiscountRepository.Search(c.DB, request, true)
 	if err != nil {
@@ -217,6 +238,10 @@ func (c *DiscountUseCase) Search(ctx context.Context, request *model.SearchDisco
 }
 
 func (c *DiscountUseCase) Get(ctx context.Context, request *model.GetDiscountRequest) (*model.DiscountResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	course, err := c.DiscountRepository.FindWithDetails(c.DB, request.UUID, true, false)
 	if err != nil {
@@ -228,6 +253,7 @@ func (c *DiscountUseCase) Get(ctx context.Context, request *model.GetDiscountReq
 }
 
 func (c *DiscountUseCase) ActivateDiscount(ctx context.Context) error {
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -247,6 +273,7 @@ func (c *DiscountUseCase) ActivateDiscount(ctx context.Context) error {
 }
 
 func (c *DiscountUseCase) DeactivateDiscount(ctx context.Context) error {
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 

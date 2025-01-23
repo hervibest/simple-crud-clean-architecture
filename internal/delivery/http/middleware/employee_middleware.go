@@ -18,7 +18,7 @@ func NewEmployeeAuth(employeeUseCase *usecase.EmployeeUseCase, validator helper.
 		}
 
 		request := &model.VerifyEmployeeRequest{Token: token}
-		if validationErr := validator.Validate(request); validationErr != nil {
+		if validationErr := validator.ValidateUseCase(request); validationErr != nil {
 			return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 				Success: false,
 				Errors:  validationErr,

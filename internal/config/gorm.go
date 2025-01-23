@@ -12,6 +12,7 @@ import (
 )
 
 func NewDatabase(viper *viper.Viper, log *logrus.Logger) *gorm.DB {
+	env := viper.GetString("app.env")
 	username := viper.GetString("database.username")
 	password := viper.GetString("database.password")
 	host := viper.GetString("database.host")
@@ -26,16 +27,21 @@ func NewDatabase(viper *viper.Viper, log *logrus.Logger) *gorm.DB {
 		host, username, password, database, port,
 	)
 
-	fmt.Println(dsn)
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.New(&logrusWriter{Logger: log}, logger.Config{
+	var gormLogger logger.Interface
+	if env == "development" {
+		gormLogger = logger.New(&logrusWriter{Logger: log}, logger.Config{
 			SlowThreshold:             time.Second * 5,
 			Colorful:                  true,
 			IgnoreRecordNotFoundError: true,
 			ParameterizedQueries:      true,
 			LogLevel:                  logger.Info,
-		}),
+		})
+	}
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: gormLogger,
 	})
+
 	if err != nil {
 		log.Fatalf("failed to connect database: %v", err)
 	}

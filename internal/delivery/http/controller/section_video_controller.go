@@ -17,18 +17,16 @@ import (
 )
 
 type SectionVideoController struct {
-	UseCase   *usecase.SecVideoUseCase
-	Log       *logrus.Logger
-	Validator helper.CustomValidator
-	Minio     *helper.Minio
+	UseCase *usecase.SecVideoUseCase
+	Log     *logrus.Logger
+	Minio   *helper.Minio
 }
 
-func NewSecVideoController(useCase *usecase.SecVideoUseCase, log *logrus.Logger, validator helper.CustomValidator, minio *helper.Minio) *SectionVideoController {
+func NewSecVideoController(useCase *usecase.SecVideoUseCase, log *logrus.Logger, minio *helper.Minio) *SectionVideoController {
 	return &SectionVideoController{
-		UseCase:   useCase,
-		Log:       log,
-		Validator: validator,
-		Minio:     minio,
+		UseCase: useCase,
+		Log:     log,
+		Minio:   minio,
 	}
 }
 
@@ -40,16 +38,14 @@ func (c *SectionVideoController) Create(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Create(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Create(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error creating section video")
 		return err
 	}
@@ -74,16 +70,14 @@ func (c *SectionVideoController) List(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	responses, pageMetadata, err := c.UseCase.Search(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	responses, pageMetadata, err := c.UseCase.Search(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error searching section videos")
 		return err
 	}
@@ -112,16 +106,14 @@ func (c *SectionVideoController) Get(ctx *fiber.Ctx) error {
 		UUID: parsedUUID,
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Get(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Get(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error getting section video")
 		return err
 	}
@@ -148,16 +140,14 @@ func (c *SectionVideoController) Update(ctx *fiber.Ctx) error {
 
 	request.VideoUUID = parsedUUID
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Update(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Update(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error updating section video")
 		return err
 	}
@@ -184,16 +174,14 @@ func (c *SectionVideoController) Delete(ctx *fiber.Ctx) error {
 
 	request.VideoUUID = parsedUUID
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.Delete(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.Delete(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error deleting secttion video")
 		return err
 	}
@@ -239,16 +227,14 @@ func (c *SectionVideoController) UploadVideo(ctx *fiber.Ctx) error {
 		SectionUUID: parsedSectionUUID,
 	}
 
-	if validationErr := c.Validator.Validate(request); validationErr != nil {
+	response, err := c.UseCase.UploadVideo(ctx.UserContext(), file, request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := c.UseCase.UploadVideo(ctx.UserContext(), file, request)
-	if err != nil {
+	} else if err != nil {
 		c.Log.WithError(err).Error("error updating section video")
 		return err
 	}
@@ -292,16 +278,14 @@ func (s *SectionVideoController) ServeHLSPlaylist(ctx *fiber.Ctx) error {
 		UUID: parsedUUID,
 	}
 
-	if validationErr := s.Validator.Validate(request); validationErr != nil {
+	response, err := s.UseCase.Get(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := s.UseCase.Get(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		s.Log.WithError(err).Error("error getting section video")
 		return err
 	}
@@ -346,16 +330,14 @@ func (s *SectionVideoController) ServeHLSKey(ctx *fiber.Ctx) error {
 		UUID: parsedUUID,
 	}
 
-	if validationErr := s.Validator.Validate(request); validationErr != nil {
+	response, err := s.UseCase.Get(ctx.UserContext(), request)
+	if validationErr, ok := err.(*helper.UseCaseValError); ok {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(model.ValidationErrorResponse{
 			Success: false,
-			Errors:  validationErr,
-			Message: "validation error",
+			Errors:  validationErr.GetValidationErrors(),
+			Message: "validation error occurred",
 		})
-	}
-
-	response, err := s.UseCase.Get(ctx.UserContext(), request)
-	if err != nil {
+	} else if err != nil {
 		s.Log.WithError(err).Error("error getting section video")
 		return err
 	}

@@ -20,17 +20,25 @@ type CertifCatUseCase struct {
 	DB                  *gorm.DB
 	Log                 *logrus.Logger
 	CertifCatRepository *repository.CertifCategoryRepository
+	Validator           helper.CustomValidator
 }
 
-func NewCertifCatUseCase(db *gorm.DB, logger *logrus.Logger, certifCatRepository *repository.CertifCategoryRepository) *CertifCatUseCase {
+func NewCertifCatUseCase(db *gorm.DB, logger *logrus.Logger, certifCatRepository *repository.CertifCategoryRepository, validator helper.CustomValidator) *CertifCatUseCase {
 	return &CertifCatUseCase{
 		DB:                  db,
 		Log:                 logger,
 		CertifCatRepository: certifCatRepository,
+		Validator:           validator,
 	}
 }
 
 func (c *CertifCatUseCase) Create(ctx context.Context, request *model.CreateCertifCatRequest) (*model.CertificateCatResponse, error) {
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
+
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
@@ -68,6 +76,10 @@ func (c *CertifCatUseCase) Create(ctx context.Context, request *model.CreateCert
 }
 
 func (c *CertifCatUseCase) Search(ctx context.Context, request *model.SearchCertificateCatRequest) ([]model.CertificateCatResponse, *model.PageMetadata, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, nil, validationErr
+	}
 
 	certifCats, pageMetadata, err := c.CertifCatRepository.Search(c.DB, request)
 	if err != nil {
@@ -84,6 +96,10 @@ func (c *CertifCatUseCase) Search(ctx context.Context, request *model.SearchCert
 }
 
 func (c *CertifCatUseCase) Get(ctx context.Context, request *model.GetCertificateCatRequest) (*model.CertificateCatResponse, error) {
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	certifCategory := new(entity.CertificateCategory)
 	if err := c.CertifCatRepository.FindByUUID(c.DB, certifCategory, request.UUID); err != nil {
@@ -95,6 +111,11 @@ func (c *CertifCatUseCase) Get(ctx context.Context, request *model.GetCertificat
 }
 
 func (c *CertifCatUseCase) Update(ctx context.Context, request *model.UpdateCertificateCatRequest) (*model.CertificateCatResponse, error) {
+
+	if validationErr := c.Validator.ValidateUseCase(request); validationErr != nil {
+		c.Log.WithError(validationErr).Error("error validating request datas")
+		return nil, validationErr
+	}
 
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()

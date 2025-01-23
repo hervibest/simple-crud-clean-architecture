@@ -10,16 +10,14 @@ import (
 )
 
 type UploadController struct {
-	Log       *logrus.Logger
-	Validator helper.CustomValidator
-	Minio     *helper.Minio
+	Log   *logrus.Logger
+	Minio *helper.Minio
 }
 
-func NewUploadController(log *logrus.Logger, validator helper.CustomValidator, minio helper.Minio) *UploadController {
+func NewUploadController(log *logrus.Logger, minio helper.Minio) *UploadController {
 	return &UploadController{
-		Log:       log,
-		Validator: validator,
-		Minio:     &minio,
+		Log:   log,
+		Minio: &minio,
 	}
 }
 
